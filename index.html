@@ -322,10 +322,11 @@ function verCarta(){
 }
 
 function verCarta(){
-    const kmStr = String(actual.km); // solo el número tal cual
+    // Solo el número del KM
+    const kmStr = String(actual.km); // 480, 481.4, etc.
     imgCarta.src = `https://Diieguitto.github.io/navegacion-fluvial/cartas/${kmStr}.jpg`;
 
-    // Placeholder si no existe la carta
+    // Placeholder si la carta no existe
     imgCarta.onerror = () => {
         imgCarta.src = "https://Diieguitto.github.io/navegacion-fluvial/cartas/placeholder.jpg";
     };
