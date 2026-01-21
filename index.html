@@ -77,7 +77,6 @@ Hora inicio: <input id="horaInicio" type="time">
 
 <!-- FIREBASE -->
 <script type="module">
-// --- IMPORTS FIREBASE ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
@@ -114,11 +113,17 @@ const btnGuardarObs = document.getElementById("btnGuardarObs");
 
 // --- ADMIN ---
 const CLAVE_ADMIN = "parana123";
-let esAdmin = false;
+let esAdmin = localStorage.getItem("admin")==="true";
+function actualizarIconoAdmin(){ adminBtn.textContent = esAdmin?"🔓":"🔒"; }
+function activarAdmin(){
+    if(esAdmin){ if(confirm("Salir del modo administrador?")){ esAdmin=false; localStorage.removeItem("admin"); actualizarIconoAdmin(); } }
+    else{ const pass=prompt("Clave administrador:"); if(pass===CLAVE_ADMIN){ esAdmin=true; localStorage.setItem("admin","true"); actualizarIconoAdmin(); } else alert("Clave incorrecta"); }
+}
+adminBtn.onclick = activarAdmin;
 
 // --- TRAMOS ---
 const TRAMOS = {
-    L6M: { nombre:"Río Paraná – Tramo KM 480 a 568 (L6M)", inicio:480, fin:568, destinos:[533,568], data:[
+    L6M:{ nombre:"Río Paraná – Tramo KM 480 a 568 (L6M)", inicio:480, fin:568, destinos:[533,568], data:[
         { km:480, clase:"violeta", txt:"Inicio L6M" },
         { km:481.4, clase:"roja" },
         { km:484.5, clase:"roja", obs:"Se puede cruzar mano con mano" },
@@ -127,7 +132,7 @@ const TRAMOS = {
         { km:533, clase:"azul", txt:"Puerto Diamante" },
         { km:568, clase:"violeta", txt:"Fin L6M" }
     ]},
-    L6N: { nombre:"Río Paraná – Tramo KM 568 a 677 (L6N)", inicio:568, fin:677, destinos:[600,677], data:[
+    L6N:{ nombre:"Río Paraná – Tramo KM 568 a 677 (L6N)", inicio:568, fin:677, destinos:[600,677], data:[
         { km:568, clase:"violeta", txt:"Inicio L6N" },
         { km:572, clase:"roja", obs:"Curva peligrosa" },
         { km:580, clase:"verde" },
@@ -139,50 +144,35 @@ const TRAMOS = {
     ]}
 };
 
-let tramoActual = "L6M";
-let actual = null;
+let tramoActual="L6M", actual=null;
 
-// --- FUNCIONES ---
 function horaSistema(){ const d=new Date(); return d.toTimeString().slice(0,5); }
 
-function actualizarIconoAdmin(){ adminBtn.textContent = esAdmin?"🔓":"🔒"; }
-
-function activarAdmin(){
-    if(esAdmin){ if(confirm("Salir del modo admin?")){ esAdmin=false; actualizarIconoAdmin(); } }
-    else{ const pass = prompt("Clave admin:"); if(pass===CLAVE_ADMIN){ esAdmin=true; actualizarIconoAdmin(); } else alert("Clave incorrecta"); }
-}
-
-adminBtn.onclick = activarAdmin;
-
-// --- TRAMOS ---
 function inicializarTramos(){
     selectorTramo.innerHTML="";
     for(const key in TRAMOS){
         const opt=document.createElement("option");
-        opt.value=key;
-        opt.textContent=TRAMOS[key].nombre;
+        opt.value=key; opt.textContent=TRAMOS[key].nombre;
         selectorTramo.appendChild(opt);
     }
     selectorTramo.value=tramoActual;
 }
 
-selectorTramo.onchange = () => { tramoActual = selectorTramo.value; sentido.value="up"; cambiarSentido(); }
+selectorTramo.onchange = ()=>{ tramoActual=selectorTramo.value; sentido.value="up"; cambiarSentido(); }
 sentido.onchange = cambiarSentido;
 
 function cambiarSentido(){
-    const t = TRAMOS[tramoActual];
+    const t=TRAMOS[tramoActual];
     kmActual.value = sentido.value==="up"?t.inicio:t.fin;
     horaInicio.value = horaSistema();
-    render();
-    recalcular();
+    render(); recalcular();
 }
 
 function render(){
-    const t = TRAMOS[tramoActual];
+    const t=TRAMOS[tramoActual];
     tituloTramo.textContent=t.nombre;
     lista.innerHTML="";
-    let arr=[...t.data];
-    if(sentido.value==="down") arr.reverse();
+    let arr=[...t.data]; if(sentido.value==="down") arr.reverse();
     arr.forEach(e=>{
         const d=document.createElement("div");
         d.className="km "+(e.clase||"");
@@ -195,22 +185,17 @@ function render(){
 }
 
 function seleccionar(e,div){
-    document.querySelectorAll(".km").forEach(x=>{x.classList.remove("selected"); x.querySelector(".menu")?.remove();});
-    actual=e;
-    div.classList.add("selected");
-    kmActual.value=e.km;
+    document.querySelectorAll(".km").forEach(x=>{ x.classList.remove("selected"); x.querySelector(".menu")?.remove(); });
+    actual=e; div.classList.add("selected"); kmActual.value=e.km;
     if(!horaInicio.value) horaInicio.value=horaSistema();
-    const m=document.createElement("div");
-    m.className="menu";
+    const m=document.createElement("div"); m.className="menu";
     m.innerHTML=`<button onclick="verCarta()">🗺 Carta</button><button onclick="verObs()">📝 Obs</button>`;
-    div.appendChild(m);
-    recalcular();
+    div.appendChild(m); recalcular();
 }
 
 function recalcular(){
     if(!horaInicio.value) return;
-    const km=+kmActual.value, vel=+velocidad.value;
-    if(!vel) return;
+    const km=+kmActual.value, vel=+velocidad.value; if(!vel) return;
     const [h,m]=horaInicio.value.split(":").map(Number);
     const inicio=h*60+m;
     const t=TRAMOS[tramoActual];
@@ -245,11 +230,11 @@ function cargarHistorial(){
     });
 }
 
-btnGuardarObs.onclick = ()=>{
+btnGuardarObs.onclick=()=>{
     const texto = textoObs.value.trim();
     if(texto.length<5){ alert("Mínimo 5 caracteres"); return; }
     const obsRef = ref(db, `obs/${tramoActual}/${actual.km}`);
-    push(obsRef,{ texto, fecha: new Date().toISOString() });
+    push(obsRef, { texto, fecha: new Date().toISOString() });
     textoObs.value="";
 };
 
@@ -267,9 +252,6 @@ function cerrar(id){ document.getElementById(id).style.display="none"; }
 // --- INIT ---
 inicializarTramos();
 cambiarTramo();
-
 </script>
 </body>
 </html>
-
-
