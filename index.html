@@ -89,7 +89,27 @@ Hora inicio:
 </div>
 </div>
 
-<script>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-database.js";
+
+// Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCdffoO-Bmp0EY2Lu-HxNga0hTRHr3S9BA",
+  authDomain: "navegacion-fluvial.firebaseapp.com",
+  databaseURL: "https://navegacion-fluvial-default-rtdb.firebaseio.com",
+  projectId: "navegacion-fluvial",
+  storageBucket: "navegacion-fluvial.firebasestorage.app",
+  messagingSenderId: "767971648775",
+  appId: "1:767971648775:web:784d1ac3310653e7d891a2",
+  measurementId: "G-YGXGSECCH3"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 /* ================= ADMIN ================= */
 const CLAVE_ADMIN="parana123";
 let esAdmin = localStorage.getItem("admin")==="true";
@@ -122,65 +142,13 @@ const TRAMOS = {
         fin: 568,
         destinos: [533,568],
         data: [
-        {km:480,tipo:"sistema",clase:"violeta",txt:"Isla El Zambo MD – Fin L6I / Inicio L6M"},
-{km:481.4,tipo:"boya",clase:"roja"},
-{km:484.5,tipo:"boya",clase:"roja",obs:"Se puede cruzar mano con mano"},
-{km:486,tipo:"peligro",clase:"negra",txt:"Imperial 339 MI – Peligro aislado"},
-{km:488,tipo:"obs",txt:"0,80 – mala vía – 40 ft"},
-{km:489.4,tipo:"boya",clase:"verde"},
-{km:491,tipo:"boya",clase:"roja"},
-{km:492,tipo:"boya",clase:"roja"},
-{km:494,tipo:"boya",clase:"roja",obs:"0,80 a mala vía – 23 ft"},
-{km:495.8,tipo:"boya",clase:"roja"},
-{km:497.5,tipo:"boya",clase:"roja"},
-{km:498,tipo:"zona",txt:"Zona de espera"},
-{km:499.7,tipo:"boya",clase:"verde"},
-{km:500,tipo:"obs",txt:"Vuelta del 500"},
-{km:500.5,tipo:"boya",clase:"roja"},
-{km:501.6,tipo:"boya",clase:"verde"},
-{km:502.4,tipo:"boya",clase:"roja"},
-{km:504.5,tipo:"boya",clase:"verde"},
-{km:506.7,tipo:"boya",clase:"verde"},
-{km:508,tipo:"boya",clase:"roja"},
-{km:509.2,tipo:"boya",clase:"roja"},
-{km:509.9,tipo:"boya",clase:"verde"},
-{km:513.7,tipo:"boya",clase:"verde"},
-{km:516.2,tipo:"boya",clase:"verde"},
-{km:517.9,tipo:"boya",clase:"verde"},
-{km:518.4,tipo:"boya",clase:"verde",obs:"A mala vía"},
-{km:519.7,tipo:"boya",clase:"roja"},
-{km:521,tipo:"peligro",clase:"negra",txt:"Peligro aislado"},
-{km:521.5,tipo:"boya",clase:"roja"},
-{km:524.3,tipo:"boya",clase:"roja"},
-{km:525.2,tipo:"boya",clase:"roja"},
-{km:527.9,tipo:"boya",clase:"verde"},
-{km:529,tipo:"boya",clase:"verde"},
-{km:531,tipo:"boya",clase:"roja"},
-{km:532.1,tipo:"boya",clase:"roja"},
-{km:533,tipo:"ciudad",clase:"azul",txt:"Puerto Diamante – Informar L6M"},
-{km:533.1,tipo:"boya",clase:"roja"},
-{km:536.8,tipo:"boya",clase:"roja"},
-{km:538.2,tipo:"boya",clase:"verde"},
-{km:539.7,tipo:"boya",clase:"verde"},
-{km:543.8,tipo:"boya",clase:"verde"},
-{km:544.6,tipo:"boya",clase:"verde"},
-{km:545.3,tipo:"boya",clase:"verde",obs:"ATENCIÓN"},
-{km:546.6,tipo:"boya",clase:"verde"},
-{km:547.6,tipo:"boya",clase:"verde"},
-{km:548.8,tipo:"boya",clase:"roja"},
-{km:550.8,tipo:"boya",clase:"roja"},
-{km:552.4,tipo:"boya",clase:"roja"},
-{km:553,tipo:"boya",clase:"roja",txt:"Gral. Alvear"},
-{km:554.8,tipo:"boya",clase:"roja"},
-{km:558,tipo:"boya",clase:"verde"},
-{km:561,tipo:"zona",txt:"Última zona de espera"},
-{km:561.3,tipo:"boya",clase:"roja"},
-{km:563,tipo:"obs",txt:"Corre mucho"},
-{km:563.6,tipo:"boya",clase:"verde"},
-{km:565.5,tipo:"boya",clase:"roja"},
-{km:567,tipo:"boya",clase:"roja",txt:"Bifurcación – espera"},
-{km:568,tipo:"sistema",clase:"violeta",txt:"Fin L6M – Inicio L6N"}
-            
+            { km: 480, clase: "violeta", txt: "Inicio L6M" },
+            { km: 481.4, clase: "roja" },
+            { km: 484.5, clase: "roja", obs: "Se puede cruzar mano con mano" },
+            { km: 486, clase: "negra", txt: "Peligro aislado" },
+            { km: 499.7, clase: "verde" },
+            { km: 533, clase: "azul", txt: "Puerto Diamante" },
+            { km: 568, clase: "violeta", txt: "Fin L6M" }
         ]
     },
     L6N: {
@@ -210,7 +178,6 @@ function horaSistema(){
     return d.toTimeString().slice(0,5);
 }
 
-/* Selector de tramos */
 function inicializarTramos(){
     const selector = document.getElementById("selectorTramo");
     selector.innerHTML = "";
@@ -230,7 +197,6 @@ function cambiarTramo(){
     cambiarSentido();
 }
 
-/* Cambiar sentido */
 function cambiarSentido(){
     const t=TRAMOS[tramoActual];
     kmActual.value = sentido.value==="up"?t.inicio:t.fin;
@@ -239,7 +205,6 @@ function cambiarSentido(){
     recalcular();
 }
 
-/* Render lista boyas/peligros */
 function render(){
     const t=TRAMOS[tramoActual];
     tituloTramo.textContent=t.nombre;
@@ -258,7 +223,6 @@ function render(){
     });
 }
 
-/* Seleccionar KM */
 function seleccionar(e,div){
     document.querySelectorAll(".km").forEach(x=>{
         x.classList.remove("selected");
@@ -279,7 +243,6 @@ function seleccionar(e,div){
     recalcular();
 }
 
-/* Recalcular ETA */
 function recalcular(){
     if(!horaInicio.value) return;
     const km=+kmActual.value;
@@ -300,28 +263,11 @@ function recalcular(){
     resultado.innerHTML=out;
 }
 
-/* ================= OBSERVACIONES ================= */
+/* ================= OBSERVACIONES con Firebase ================= */
 function verObs(){
     kmObs.textContent=actual.km;
-    cargarHistorial();
+    cargarObsFirebase(tramoActual, actual.km);
     modalObs.style.display="flex";
-}
-
-function cargarHistorial(){
-    const h = JSON.parse(localStorage.getItem(tramoActual+"_obs_"+actual.km)||"[]");
-    historial.innerHTML = "";
-    h.slice().reverse().forEach((o, idx) => {
-        const realIndex = h.length - 1 - idx;
-        historial.innerHTML += `
-        <div class="historico">
-            <div class="fecha">${new Date(o.fecha).toLocaleString()}</div>
-            <div>${o.texto}</div>
-            ${esAdmin?`
-                <button onclick="editarObs(${realIndex})">✏️</button>
-                <button onclick="borrarObs(${realIndex})">🗑</button>
-            `:""}
-        </div>`;
-    });
 }
 
 function guardarObs(){
@@ -330,61 +276,44 @@ function guardarObs(){
         alert("La observación debe tener al menos 5 caracteres.");
         return;
     }
-    const key = tramoActual+"_obs_"+actual.km;
-    const arr = JSON.parse(localStorage.getItem(key) || "[]");
-    arr.push({texto, fecha: new Date()});
-    localStorage.setItem(key, JSON.stringify(arr));
+    const referencia = ref(db, `observaciones/${tramoActual}/${actual.km}`);
+    push(referencia, {
+        texto: texto,
+        fecha: new Date().toISOString()
+    });
     textoObs.value = "";
-    cargarHistorial();
 }
 
-function editarObs(i){
-    if(!esAdmin) return;
-    const key = tramoActual+"_obs_"+actual.km;
-    const arr = JSON.parse(localStorage.getItem(key) || "[]");
-    const nuevoTexto = prompt("Editar observación:", arr[i].texto);
-    if(nuevoTexto===null) return;
-    if(nuevoTexto.trim().length<5){
-        alert("La observación debe tener al menos 5 caracteres.");
-        return;
-    }
-    arr[i].texto = nuevoTexto.trim();
-    localStorage.setItem(key, JSON.stringify(arr));
-    cargarHistorial();
-}
-
-function borrarObs(i){
-    if(!confirm("¿Borrar observación?")) return;
-    const key = tramoActual+"_obs_"+actual.km;
-    const arr = JSON.parse(localStorage.getItem(key)||"[]");
-    arr.splice(i,1);
-    localStorage.setItem(key, JSON.stringify(arr));
-    cargarHistorial();
+function cargarObsFirebase(tramo, km){
+    const referencia = ref(db, `observaciones/${tramo}/${km}`);
+    onValue(referencia, (snapshot)=>{
+        const datos = snapshot.val() || {};
+        const obsArray = Object.values(datos);
+        historial.innerHTML = "";
+        obsArray.slice().reverse().forEach(o=>{
+            historial.innerHTML += `
+            <div class="historico">
+                <div class="fecha">${new Date(o.fecha).toLocaleString()}</div>
+                <div>${o.texto}</div>
+            </div>`;
+        });
+    });
 }
 
 /* ================= CARTAS ================= */
-
-
 function verCarta(){
     let kmStr;
-    // Si el KM tiene decimal, reemplaza . por _
     if(Number.isInteger(actual.km)){
         kmStr = String(actual.km); // 480.jpg
     } else {
         kmStr = String(actual.km).replace('.', '_'); // 481_4.jpg
     }
-
-    // URL de GitHub Pages
-    imgCarta.src = `https://Diieguitto.github.io/navegacion-fluvial/CARTAS/${kmStr}.jpg`;
-
-    // Si no existe la carta, muestra placeholder
+    imgCarta.src = `https://Diieguitto.github.io/navegacion-fluvial/cartas/${kmStr}.jpg`;
     imgCarta.onerror = () => {
-        imgCarta.src = "https://Diieguitto.github.io/navegacion-fluvial/CARTAS/placeholder.jpg";
+        imgCarta.src = "https://Diieguitto.github.io/navegacion-fluvial/cartas/placeholder.jpg";
     };
-
     modalCarta.style.display = "flex";
 }
-
 
 /* ================= UTIL ================= */
 function cerrar(id){document.getElementById(id).style.display="none";}
@@ -394,7 +323,8 @@ actualizarIconoAdmin();
 inicializarTramos();
 horaInicio.value = horaSistema();
 cambiarTramo();
-</script>
 
+</script>
 </body>
 </html>
+
