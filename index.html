@@ -330,23 +330,39 @@ function recalcular(){
 
     // Destinos predefinidos
     t.destinos.forEach(d => {
-        const tt = inicio + Math.abs(d - km) / vel * 60;
-        const hh = Math.floor(tt / 60) % 24;
-        const mm = Math.floor(tt % 60);
-        out += `KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}<br>`;
+        const minutosViaje = Math.abs(d - km) / vel * 60;
+const tt = inicio + minutosViaje;
+
+const hh = Math.floor(tt / 60) % 24;
+const mm = Math.floor(tt % 60);
+
+out += `KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}
+        <span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span><br>`;
+
     });
 
     // Destino manual
     if(destinoManual !== null && !isNaN(destinoManual)){
-        const tt = inicio + Math.abs(destinoManual - km) / vel * 60;
-        const hh = Math.floor(tt / 60) % 24;
-        const mm = Math.floor(tt % 60);
+        const minutosViaje = Math.abs(destinoManual - km) / vel * 60;
+const tt = inicio + minutosViaje;
 
-        out += `<hr><b>KM ${destinoManual}:</b> ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+const hh = Math.floor(tt / 60) % 24;
+const mm = Math.floor(tt % 60);
+
+out += `<hr><b>KM ${destinoManual}:</b> ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}
+        <span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span>`;
+
     }
 
     resultado.innerHTML = out;
 }
+
+function formatearDuracion(minutos){
+    const h = Math.floor(minutos / 60);
+    const m = Math.round(minutos % 60);
+    return `${h} h ${m} min`;
+}
+
 
 /* ================= OBSERVACIONES ================= */
 
