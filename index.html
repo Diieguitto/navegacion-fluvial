@@ -344,7 +344,8 @@ function escucharObservaciones(){
     const q = query(ref, orderBy("fecha", "desc"));
 
     unsubscribeObs = onSnapshot(q, snap => {
-        historial.innerHTML = "";
+        const historial = document.getElementById("historial");
+historial.innerHTML = "";
 
         snap.forEach(docu => {
             const o = docu.data();
@@ -366,16 +367,23 @@ function escucharObservaciones(){
 }
 
 window.verObs = function(){
-    kmObs.textContent = actual.km;
+    document.getElementById("kmObs").textContent = actual.km;
+    document.getElementById("modalObs").style.display = "flex";
     escucharObservaciones();
-    modalObs.style.display = "flex";
 }
 
 
 
 
-window.guardarObs = async function(){
 
+window.guardarObs = async function(){
+    const textarea = document.getElementById("textoObs");
+    const texto = textarea.value.trim();
+
+    if(texto.length < 5){
+        alert("La observación debe tener al menos 5 caracteres.");
+        return;
+    }
 
     const ref = collection(
         db,
@@ -385,12 +393,12 @@ window.guardarObs = async function(){
     );
 
     await addDoc(ref, {
-        texto,
+        texto: texto,
         fecha: new Date(),
         admin: esAdmin
     });
 
-    textoObs.value = "";
+    textarea.value = "";
 }
 
 
