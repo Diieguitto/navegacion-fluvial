@@ -328,6 +328,43 @@ function recalcular(){
 }
 
 /* ================= OBSERVACIONES ================= */
+
+let unsubscribeObs = null;
+
+function escucharObservaciones(){
+    if(unsubscribeObs) unsubscribeObs();
+
+    const ref = collection(
+        db,
+        "observaciones",
+        tramoActual,
+        String(actual.km)
+    );
+
+    const q = query(ref, orderBy("fecha", "desc"));
+
+    unsubscribeObs = onSnapshot(q, snap => {
+        historial.innerHTML = "";
+
+        snap.forEach(docu => {
+            const o = docu.data();
+            const div = document.createElement("div");
+            div.className = "historico";
+
+            div.innerHTML = `
+                <div class="fecha">${o.fecha.toDate().toLocaleString()}</div>
+                <div>${o.texto}</div>
+                ${esAdmin ? `
+                    <button onclick="editarObs('${docu.id}')">✏️</button>
+                    <button onclick="borrarObs('${docu.id}')">🗑</button>
+                ` : ""}
+            `;
+
+            historial.appendChild(div);
+        });
+    });
+}
+
 window.verObs = function(){
     kmObs.textContent = actual.km;
     escucharObservaciones();
@@ -337,12 +374,8 @@ window.verObs = function(){
 
 
 
-async function guardarObs(){
-    const texto = textoObs.value.trim();
-    if(texto.length < 5){
-        alert("La observación debe tener al menos 5 caracteres.");
-        return;
-    }
+window.guardarObs = async function(){
+
 
     const ref = collection(
         db,
@@ -361,7 +394,7 @@ async function guardarObs(){
 }
 
 
-async function editarObs(id){
+window.editarObs = async function(id){
     if(!esAdmin) return;
 
     const nuevo = prompt("Editar observación:");
@@ -379,7 +412,7 @@ async function editarObs(id){
 }
 
 
-async function borrarObs(id){
+window.borrarObs = async function(id){
     if(!confirm("¿Borrar observación?")) return;
 
     const ref = doc(
