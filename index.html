@@ -183,7 +183,8 @@ window.guardarAlerta = async function(){
 }
 
 // alertas reportadas por usuarios en el tramo actual
-let alertasUsuario = [];
+let alertasUsuario = []; 
+// Cada alerta: { desde: number, hasta: number, texto: string, fecha: Date }
 
 async function cargarAlertasUsuario(){
     const ref = collection(db, "alertas_usuario", tramoActual);
@@ -219,6 +220,34 @@ window.activarAdmin = function(){
 function actualizarIconoAdmin(){
     adminBtn.textContent = esAdmin ? "🔓" : "🔒";
 }
+function reportarAlerta() {
+    if(esAdmin){
+        alert("El administrador no puede reportar alertas de usuario.");
+        return;
+    }
+
+    let desde = parseFloat(prompt("KM inicio de la alerta:"));
+    let hasta = parseFloat(prompt("KM fin de la alerta (igual si es 1 KM):"));
+    let texto = prompt("Texto de la alerta:");
+
+    if(isNaN(desde) || isNaN(hasta) || !texto){
+        alert("Datos incorrectos");
+        return;
+    }
+
+    if(hasta < desde) [desde, hasta] = [hasta, desde]; // intercambio si está al revés
+
+    alertasUsuario.push({
+        desde,
+        hasta,
+        texto,
+        fecha: new Date()
+    });
+
+    render();
+    mostrarAlertaTramo();
+}
+
 
 function escucharAlertasUsuario(){
     const ref = collection(db, "alertas_navegacion");
@@ -395,7 +424,15 @@ function prohibicionesTramo(){
 
 function mostrarAlertaTramo(){
     const cont = document.getElementById("alertaTramo");
-    let zonas = prohibicionesTramo();
+    let zonas = [...prohibicionesTramo()];
+
+    // 🔹 Agregar alertas de usuario
+    zonas.push(...alertasUsuario.map(a => ({
+        desde: a.desde,
+        hasta: a.hasta,
+        texto: a.texto,
+        tipo: "alerta_usuario"
+    })));
 
     if(!zonas.length){
         cont.innerHTML = "";
@@ -403,10 +440,8 @@ function mostrarAlertaTramo(){
     }
 
     // ordenar según sentido
-    zonas = [...zonas].sort((a,b) => {
-        return sentido.value === "up"
-            ? a.desde - b.desde
-            : b.desde - a.desde;
+    zonas = zonas.sort((a,b) => {
+        return sentido.value === "up" ? a.desde - b.desde : b.desde - a.desde;
     });
 
     cont.innerHTML = `
@@ -420,17 +455,15 @@ function mostrarAlertaTramo(){
         font-size:12.5px;
         line-height:1.4;
     ">
-        ⛔ <b>Prohibiciones de cruce en el tramo</b><br>
+        ⛔ <b>Prohibiciones y alertas en el tramo</b><br>
         ${zonas.map(z => {
             const d1 = sentido.value === "up" ? z.desde : z.hasta;
             const d2 = sentido.value === "up" ? z.hasta : z.desde;
-            const fecha = z.fecha ? ` – reportado: ${new Date(z.fecha.seconds*1000).toLocaleDateString()}` : "";
-            return `• KM ${d1} a ${d2} – ${z.texto}${z.origen === "usuario" ? fecha : ""}`;
+            return `• KM ${d1} a ${d2} – ${z.texto}`;
         }).join("<br>")}
     </div>
     `;
 }
-
 
 
 
@@ -465,20 +498,63 @@ window.cambiarSentido = cambiarSentido;
 function kmEnProhibicion(km){
     return zonasCruceActivas(km).length > 0;
 }
+
+
 function render(){
-    const t=TRAMOS[tramoActual];
-    tituloTramo.textContent=t.nombre;
-    lista.innerHTML="";
-    let arr=[...t.data];
-    if(sentido.value==="down") arr.reverse();
+    const t = TRAMOS[tramoActual];
+    tituloTramo.textContent = t.nombre;
+    lista.innerHTML = "";
 
-    arr.forEach(e=>{
+    let arr = [...t.data];
+    if(sentido.value === "down") arr.reverse();
+
+    arr.forEach(e => {
         const d = document.createElement("div");
-d.className = "km "+(e.clase||"");
+        d.className = "km " + (e.clase || "");
 
-if(kmEnProhibicion(e.km)){
-    d.classList.add("prohibicion");
+        // 🚧 Prohibiciones fijas
+        const crucesKm = zonasCruceActivas(e.km);
+        if(crucesKm.length){
+            d.classList.add("prohibicion");
+        }
+
+        d.innerHTML = `<b>KM ${e.km}</b>`;
+        if(e.txt) d.innerHTML += `<div class="obs">${e.txt}</div>`;
+        if(e.obs) d.innerHTML += `<div class="obs">${e.obs}</div>`;
+
+        // ⚠️ Alertas de usuario
+        const alertasKm = alertasUsuario.filter(a => e.km >= a.desde && e.km <= a.hasta);
+        if(alertasKm.length){
+            d.style.background = "#fdecea"; // rojo claro
+            d.style.borderLeftColor = "#c62828";
+
+            const aviso = document.createElement("div");
+            aviso.className = "obs";
+            aviso.innerHTML = alertasKm.map(a => `⚠️ ${a.texto}`).join("<br>");
+            
+            // borrar alerta solo admin
+            if(esAdmin){
+                alertasKm.forEach(alerta => {
+                    const btnBorrar = document.createElement("button");
+                    btnBorrar.textContent = "🗑";
+                    btnBorrar.style.marginLeft = "5px";
+                    btnBorrar.onclick = () => {
+                        alertasUsuario = alertasUsuario.filter(a => a !== alerta);
+                        render();
+                        mostrarAlertaTramo();
+                    };
+                    aviso.appendChild(btnBorrar);
+                });
+            }
+
+            d.appendChild(aviso);
+        }
+
+        d.onclick = () => seleccionar(e,d);
+        lista.appendChild(d);
+    });
 }
+
 
         d.innerHTML=`<b>KM ${e.km}</b>`;
         if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
