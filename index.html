@@ -152,6 +152,22 @@ const TRAMOS = {
         inicio: 480,
         fin: 568,
         destinos: [533,568],
+        zonasFijas: [
+        {
+            tipo: "prohibicion_cruce",
+            desde: 492,
+            hasta: 498,
+            texto: "Canal angosto – prohibido cruce",
+            sentido: "ambos"
+        },
+        {
+            tipo: "prohibicion_cruce",
+            desde: 505,
+            hasta: 507,
+            texto: "Curva cerrada – prohibido cruce",
+            sentido: "up"
+        }
+    ],
         data: [
         {km:480,tipo:"sistema",clase:"violeta",txt:"Isla El Zambo MD – Fin L6I / Inicio L6M"},
 {km:481.4,tipo:"boya",clase:"roja"},
@@ -304,6 +320,13 @@ function render(){
         if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
         d.onclick=()=>seleccionar(e,d);
         lista.appendChild(d);
+        const crucesKm = zonasCruceActivas(e.km);
+
+if(crucesKm.length){
+    d.style.background = "#fdecea";
+    d.style.borderLeftColor = "#c62828";
+}
+
     });
 }
 
@@ -321,6 +344,18 @@ function seleccionar(e,div){
     kmActual.value=e.km;
     if(!horaInicio.value) horaInicio.value=horaSistema();
 
+    const crucesKm = zonasCruceActivas(e.km);
+
+if(crucesKm.length){
+    const aviso = document.createElement("div");
+    aviso.className = "obs";
+    aviso.innerHTML = crucesKm
+        .map(z => `⛔ ${z.texto} (${z.desde}–${z.hasta})`)
+        .join("<br>");
+    div.appendChild(aviso);
+}
+
+
     const m=document.createElement("div");
     m.className="menu";
     m.innerHTML=`
@@ -332,6 +367,19 @@ function seleccionar(e,div){
 }
 
 /* Recalcular ETA */
+
+function zonasCruceActivas(km){
+    const t = TRAMOS[tramoActual];
+    if(!t.zonasFijas) return [];
+
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce" &&
+        km >= z.desde &&
+        km <= z.hasta &&
+        (z.sentido === "ambos" || z.sentido === sentido.value)
+    );
+}
+
 
 
 function recalcular(){
@@ -347,6 +395,24 @@ function recalcular(){
     const [h,m] = horaInicio.value.split(":").map(Number);
     const inicio = h*60 + m;
     const t = TRAMOS[tramoActual];
+    const cruces = zonasCruceActivas(km);
+
+cruces.forEach(z => {
+    out += `
+    <div style="
+        background:#c62828;
+        color:white;
+        padding:6px;
+        border-radius:4px;
+        margin-bottom:6px;
+        font-weight:bold;
+    ">
+        ⛔ PROHIBIDO CRUCE<br>
+        ${z.texto}<br>
+        KM ${z.desde} → KM ${z.hasta}
+    </div>
+    `;
+});
 
     let out = "<b>ETA:</b><br>";
     window.recalcular = recalcular;
