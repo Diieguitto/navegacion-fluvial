@@ -43,9 +43,7 @@ textarea{width:100%;min-height:70px;}
     <button id="adminBtn" onclick="activarAdmin()">🔒</button>
     <h2 id="tituloTramo"></h2>
     <div id="alertaTramo"></div>
-    <button onclick="nuevaAlerta()" style="margin-left:10px;background:#c62828;color:white;padding:6px;border:none;border-radius:4px;cursor:pointer;">
-        ⚠️ Reportar alerta
-    </button>
+
 
     Tramo:
     <select id="selectorTramo" onchange="cambiarTramo()"></select>
@@ -60,7 +58,8 @@ textarea{width:100%;min-height:70px;}
 <div class="panel">
 <h3>📏 Estimativas</h3>
 KM actual:
-<input id="kmActual" type="number" step="0.1" oninput="kmManual=true; recalcular()">
+<input id="kmActual" type="number" step="0.1"
+       oninput="kmManual=true; recalcular()">
 
 Velocidad (km/h):
 <input id="velocidad" type="number" value="12" step="0.1" oninput="recalcular()">
@@ -97,23 +96,8 @@ Hora inicio:
 </div>
 </div>
 
-<!-- MODAL ALERTA -->
-<div class="modal" id="modalAlerta">
-    <div class="modal-content">
-      <span class="close" onclick="cerrar('modalAlerta')">×</span>
-      <h3>📢 Reportar prohibición o alerta</h3>
-      <label>Desde KM:</label>
-      <input type="number" id="alertaDesde" step="0.1"><br>
-      <label>Hasta KM (opcional):</label>
-      <input type="number" id="alertaHasta" step="0.1"><br>
-      <label>Descripción:</label>
-      <textarea id="alertaTexto"></textarea><br>
-      <button onclick="guardarAlerta()">Guardar alerta</button>
-    </div>
-</div>
-
 <script type="module">
-/* ================= FIREBASE ================= */
+    /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -139,23 +123,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ================= ELEMENTOS GLOBALES ================= */
-const tituloTramo = document.getElementById("tituloTramo");
-const lista = document.getElementById("lista");
-const modalCarta = document.getElementById("modalCarta");
-const imgCarta = document.getElementById("imgCarta");
-const adminBtn = document.getElementById("adminBtn");
-const kmActual = document.getElementById("kmActual");
-const sentido = document.getElementById("sentido");
-const horaInicio = document.getElementById("horaInicio");
-const resultado = document.getElementById("resultado");
-
-/* ================= VARIABLES ================= */
-let tramoActual="L6M";
-let actual=null;
-let kmManual = false;
-let alertasUsuario = [];
+/* ================= ADMIN ================= */
+const CLAVE_ADMIN="parana123";
 let esAdmin = localStorage.getItem("admin")==="true";
+
+window.activarAdmin = function(){
+    if(esAdmin){
+        if(confirm("¿Salir del modo administrador?")){
+            esAdmin=false;
+            localStorage.removeItem("admin");
+        }
+    }else{
+        const pass=prompt("Clave administrador:");
+        if(pass===CLAVE_ADMIN){
+            esAdmin=true;
+            localStorage.setItem("admin","true");
+        }else alert("Clave incorrecta");
+    }
+    actualizarIconoAdmin();
+}
+
+
+function actualizarIconoAdmin(){
+    adminBtn.textContent = esAdmin ? "🔓" : "🔒";
+}
 
 /* ================= TRAMOS ================= */
 const TRAMOS = {
@@ -165,68 +156,81 @@ const TRAMOS = {
         fin: 568,
         destinos: [533,568],
         zonasFijas: [
-            { tipo: "prohibicion_cruce", desde: 492, hasta: 498, texto: "Canal angosto – prohibido cruce" },
-            { tipo: "prohibicion_cruce", desde: 505, hasta: 507, texto: "Vuelta cerrada – prohibido cruce" }
-        ],
+        {
+            tipo: "prohibicion_cruce",
+            desde: 492,
+            hasta: 498,
+            texto: "Canal angosto – prohibido cruce",
+            
+        },
+        {
+            tipo: "prohibicion_cruce",
+            desde: 505,
+            hasta: 507,
+            texto: "Vuelta cerrada – prohibido cruce",
+            
+        }
+    ],
         data: [
-            {km:480,tipo:"sistema",clase:"violeta",txt:"Isla El Zambo MD – Fin L6I / Inicio L6M"},
-            {km:481.4,tipo:"boya",clase:"roja"},
-            {km:484.5,tipo:"boya",clase:"roja",obs:"Se puede cruzar mano con mano"},
-            {km:486,tipo:"peligro",clase:"negra",txt:"Imperial 339 MI – Peligro aislado"},
-            {km:488,tipo:"obs",txt:"0,80 – mala vía – 40 ft"},
-            {km:489.4,tipo:"boya",clase:"verde"},
-            {km:491,tipo:"boya",clase:"roja"},
-            {km:492,tipo:"boya",clase:"roja"},
-            {km:494,tipo:"boya",clase:"roja",obs:"0,80 a mala vía – 23 ft"},
-            {km:495.8,tipo:"boya",clase:"roja"},
-            {km:497.5,tipo:"boya",clase:"roja"},
-            {km:498,tipo:"zona",txt:"Zona de espera"},
-            {km:499.7,tipo:"boya",clase:"verde"},
-            {km:500,tipo:"obs",txt:"Vuelta del 500"},
-            {km:500.5,tipo:"boya",clase:"roja"},
-            {km:501.6,tipo:"boya",clase:"verde"},
-            {km:502.4,tipo:"boya",clase:"roja"},
-            {km:504.5,tipo:"boya",clase:"verde"},
-            {km:506.7,tipo:"boya",clase:"verde"},
-            {km:508,tipo:"boya",clase:"roja"},
-            {km:509.2,tipo:"boya",clase:"roja"},
-            {km:509.9,tipo:"boya",clase:"verde"},
-            {km:513.7,tipo:"boya",clase:"verde"},
-            {km:516.2,tipo:"boya",clase:"verde"},
-            {km:517.9,tipo:"boya",clase:"verde"},
-            {km:518.4,tipo:"boya",clase:"verde",obs:"A mala vía"},
-            {km:519.7,tipo:"boya",clase:"roja"},
-            {km:521,tipo:"peligro",clase:"negra",txt:"Peligro aislado"},
-            {km:521.5,tipo:"boya",clase:"roja"},
-            {km:524.3,tipo:"boya",clase:"roja"},
-            {km:525.2,tipo:"boya",clase:"roja"},
-            {km:527.9,tipo:"boya",clase:"verde"},
-            {km:529,tipo:"boya",clase:"verde"},
-            {km:531,tipo:"boya",clase:"roja"},
-            {km:532.1,tipo:"boya",clase:"roja"},
-            {km:533,tipo:"ciudad",clase:"azul",txt:"Puerto Diamante – Informar L6M"},
-            {km:533.1,tipo:"boya",clase:"roja"},
-            {km:536.8,tipo:"boya",clase:"roja"},
-            {km:538.2,tipo:"boya",clase:"verde"},
-            {km:539.7,tipo:"boya",clase:"verde"},
-            {km:543.8,tipo:"boya",clase:"verde"},
-            {km:544.6,tipo:"boya",clase:"verde"},
-            {km:545.3,tipo:"boya",clase:"verde",obs:"ATENCIÓN"},
-            {km:546.6,tipo:"boya",clase:"verde"},
-            {km:547.6,tipo:"boya",clase:"verde"},
-            {km:548.8,tipo:"boya",clase:"roja"},
-            {km:550.8,tipo:"boya",clase:"roja"},
-            {km:552.4,tipo:"boya",clase:"roja"},
-            {km:553,tipo:"boya",clase:"roja",txt:"Gral. Alvear"},
-            {km:554.8,tipo:"boya",clase:"roja"},
-            {km:558,tipo:"boya",clase:"verde"},
-            {km:561,tipo:"zona",txt:"Última zona de espera"},
-            {km:561.3,tipo:"boya",clase:"roja"},
-            {km:563,tipo:"obs",txt:"Corre mucho"},
-            {km:563.6,tipo:"boya",clase:"verde"},
-            {km:565.5,tipo:"boya",clase:"roja"},
-            {km:567,tipo:"boya",clase:"roja",txt:"Bifurcación – espera"},
-            {km:568,tipo:"sistema",clase:"violeta",txt:"Fin L6M – Inicio L6N"}
+        {km:480,tipo:"sistema",clase:"violeta",txt:"Isla El Zambo MD – Fin L6I / Inicio L6M"},
+{km:481.4,tipo:"boya",clase:"roja"},
+{km:484.5,tipo:"boya",clase:"roja",obs:"Se puede cruzar mano con mano"},
+{km:486,tipo:"peligro",clase:"negra",txt:"Imperial 339 MI – Peligro aislado"},
+{km:488,tipo:"obs",txt:"0,80 – mala vía – 40 ft"},
+{km:489.4,tipo:"boya",clase:"verde"},
+{km:491,tipo:"boya",clase:"roja"},
+{km:492,tipo:"boya",clase:"roja"},
+{km:494,tipo:"boya",clase:"roja",obs:"0,80 a mala vía – 23 ft"},
+{km:495.8,tipo:"boya",clase:"roja"},
+{km:497.5,tipo:"boya",clase:"roja"},
+{km:498,tipo:"zona",txt:"Zona de espera"},
+{km:499.7,tipo:"boya",clase:"verde"},
+{km:500,tipo:"obs",txt:"Vuelta del 500"},
+{km:500.5,tipo:"boya",clase:"roja"},
+{km:501.6,tipo:"boya",clase:"verde"},
+{km:502.4,tipo:"boya",clase:"roja"},
+{km:504.5,tipo:"boya",clase:"verde"},
+{km:506.7,tipo:"boya",clase:"verde"},
+{km:508,tipo:"boya",clase:"roja"},
+{km:509.2,tipo:"boya",clase:"roja"},
+{km:509.9,tipo:"boya",clase:"verde"},
+{km:513.7,tipo:"boya",clase:"verde"},
+{km:516.2,tipo:"boya",clase:"verde"},
+{km:517.9,tipo:"boya",clase:"verde"},
+{km:518.4,tipo:"boya",clase:"verde",obs:"A mala vía"},
+{km:519.7,tipo:"boya",clase:"roja"},
+{km:521,tipo:"peligro",clase:"negra",txt:"Peligro aislado"},
+{km:521.5,tipo:"boya",clase:"roja"},
+{km:524.3,tipo:"boya",clase:"roja"},
+{km:525.2,tipo:"boya",clase:"roja"},
+{km:527.9,tipo:"boya",clase:"verde"},
+{km:529,tipo:"boya",clase:"verde"},
+{km:531,tipo:"boya",clase:"roja"},
+{km:532.1,tipo:"boya",clase:"roja"},
+{km:533,tipo:"ciudad",clase:"azul",txt:"Puerto Diamante – Informar L6M"},
+{km:533.1,tipo:"boya",clase:"roja"},
+{km:536.8,tipo:"boya",clase:"roja"},
+{km:538.2,tipo:"boya",clase:"verde"},
+{km:539.7,tipo:"boya",clase:"verde"},
+{km:543.8,tipo:"boya",clase:"verde"},
+{km:544.6,tipo:"boya",clase:"verde"},
+{km:545.3,tipo:"boya",clase:"verde",obs:"ATENCIÓN"},
+{km:546.6,tipo:"boya",clase:"verde"},
+{km:547.6,tipo:"boya",clase:"verde"},
+{km:548.8,tipo:"boya",clase:"roja"},
+{km:550.8,tipo:"boya",clase:"roja"},
+{km:552.4,tipo:"boya",clase:"roja"},
+{km:553,tipo:"boya",clase:"roja",txt:"Gral. Alvear"},
+{km:554.8,tipo:"boya",clase:"roja"},
+{km:558,tipo:"boya",clase:"verde"},
+{km:561,tipo:"zona",txt:"Última zona de espera"},
+{km:561.3,tipo:"boya",clase:"roja"},
+{km:563,tipo:"obs",txt:"Corre mucho"},
+{km:563.6,tipo:"boya",clase:"verde"},
+{km:565.5,tipo:"boya",clase:"roja"},
+{km:567,tipo:"boya",clase:"roja",txt:"Bifurcación – espera"},
+{km:568,tipo:"sistema",clase:"violeta",txt:"Fin L6M – Inicio L6N"}
+            
         ]
     },
     L6N: {
@@ -247,9 +251,18 @@ const TRAMOS = {
     }
 };
 
-/* ================= FUNCIONES ================= */
-function horaSistema(){ const d=new Date(); return d.toTimeString().slice(0,5); }
+let tramoActual="L6M";
+let actual=null;
+let kmManual = false;
 
+
+/* ================= FUNCIONES ================= */
+function horaSistema(){
+    const d = new Date();
+    return d.toTimeString().slice(0,5);
+}
+
+/* Selector de tramos */
 function inicializarTramos(){
     const selector = document.getElementById("selectorTramo");
     selector.innerHTML = "";
@@ -263,247 +276,392 @@ function inicializarTramos(){
 }
 
 function cambiarTramo(){
-    tramoActual = document.getElementById("selectorTramo").value;
-    kmManual = false;
+    const selector = document.getElementById("selectorTramo");
+    tramoActual = selector.value;
+
+    kmManual = false; // 👈 clave
+
     sentido.value = "up";
     cambiarSentido();
 }
 window.cambiarTramo = cambiarTramo;
 
-function cambiarSentido(){
+function prohibicionesTramo(){
     const t = TRAMOS[tramoActual];
-    if(!kmManual) kmActual.value = sentido.value==="up"?t.inicio:t.fin;
-    if(!horaInicio.value) horaInicio.value = horaSistema();
-    render(); recalcular(); mostrarAlertaTramo(); escucharAlertasUsuario(); actualizarIconoAdmin();
-    inicializarTramos();
-    cargarAlertasUsuario();
-}
-window.cambiarSentido = cambiarSentido;
+    if(!t.zonasFijas) return [];
 
-function actualizarIconoAdmin(){ adminBtn.textContent = esAdmin?"🔓":"🔒"; }
-
-function zonasCruceActivas(km){
-    const t=TRAMOS[tramoActual];
-    let fijas = t.zonasFijas ? t.zonasFijas.filter(z=>z.tipo==="prohibicion_cruce") : [];
-    let usuario = alertasUsuario.filter(a=>a.tipo==="prohibicion_cruce" && km>=a.desde && km<=a.hasta);
-    return [...fijas, ...usuario];
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce"
+    );
 }
+
 
 function mostrarAlertaTramo(){
     const cont = document.getElementById("alertaTramo");
-    const t = TRAMOS[tramoActual];
-    let zonas = [];
-    if(t.zonasFijas) zonas.push(...t.zonasFijas.filter(z=>z.tipo==="prohibicion_cruce"));
-    zonas.push(...alertasUsuario.map(a=>({desde:a.desde,hasta:a.hasta,texto:a.texto})));
-    if(!zonas.length){ cont.innerHTML=""; return; }
-    zonas.sort((a,b)=>sentido.value==="up"?a.desde-b.desde:b.desde-a.desde);
-    cont.innerHTML=`
-    <div style="background:#fff3cd;color:#333;padding:8px 10px;border-left:6px solid #c62828;border-radius:5px;margin-top:8px;font-size:12.5px;line-height:1.4;">
-        ⛔ <b>Prohibiciones y alertas en el tramo</b><br>
-        ${zonas.map(z=>{
-            const d1 = sentido.value==="up"?z.desde:z.hasta;
-            const d2 = sentido.value==="up"?z.hasta:z.desde;
-            return `• KM ${d1} a ${d2} – ${z.texto}`;
-        }).join("<br>")}
+    let zonas = prohibicionesTramo();
+
+    if(!zonas.length){
+        cont.innerHTML = "";
+        return;
+    }
+
+    // ordenar según sentido de navegación
+    zonas = [...zonas].sort((a,b) => {
+        return sentido.value === "up"
+            ? a.desde - b.desde
+            : b.desde - a.desde;
+    });
+
+    cont.innerHTML = `
+    <div style="
+        background:#fff3cd;
+        color:#333;
+        padding:8px 10px;
+        border-left:6px solid #c62828;
+        border-radius:5px;
+        margin-top:8px;
+        font-size:12px;
+        line-height:1.4;
+    ">
+        ⛔ <b>Prohibiciones de cruce en el tramo</b><br>
+        ${
+            zonas.map(z => {
+                const d1 = sentido.value === "up" ? z.desde : z.hasta;
+                const d2 = sentido.value === "up" ? z.hasta : z.desde;
+                return `• KM ${d1} a ${d2} – ${z.texto}`;
+            }).join("<br>")
+        }
     </div>
     `;
 }
 
-/* ================= ALERTAS DE USUARIO ================= */
-window.nuevaAlerta = function(){
-    if(esAdmin){ alert("El administrador no puede reportar alertas de usuario."); return; }
-    document.getElementById("alertaDesde").value="";
-    document.getElementById("alertaHasta").value="";
-    document.getElementById("alertaTexto").value="";
-    document.getElementById("modalAlerta").style.display="flex";
+
+
+
+
+
+/* Cambiar sentido */
+function cambiarSentido(){
+    const t = TRAMOS[tramoActual];
+
+    if(!kmManual){
+        kmActual.value = sentido.value === "up" ? t.inicio : t.fin;
+    }
+
+    if(!horaInicio.value){
+        horaInicio.value = horaSistema();
+    }
+
+    render();
+    recalcular();
+    mostrarAlertaTramo();
 }
 
-window.guardarAlerta = async function(){
-    const desde=parseFloat(document.getElementById("alertaDesde").value);
-    let hasta=parseFloat(document.getElementById("alertaHasta").value);
-    const texto=document.getElementById("alertaTexto").value.trim();
-    if(isNaN(desde)||texto.length<5){ alert("KM inicial y descripción son obligatorios."); return; }
-    if(isNaN(hasta)||hasta<desde) hasta=desde;
-    const ref = collection(db,"alertas_usuario",tramoActual);
-    await addDoc(ref,{desde,hasta,texto,fecha:new Date(),admin:false});
-    cerrar("modalAlerta");
-}
+window.cambiarSentido = cambiarSentido;
 
-async function cargarAlertasUsuario(){
-    const ref = collection(db,"alertas_usuario",tramoActual);
-    const q = query(ref,orderBy("fecha","desc"));
-    onSnapshot(q,snap=>{
-        alertasUsuario = snap.docs.map(d=>({id:d.id,...d.data()}));
-        render(); mostrarAlertaTramo();
-    });
-}
 
+/* Render lista boyas/peligros */
+
+function kmEnProhibicion(km){
+    const zonas = prohibicionesTramo();
+    return zonas.some(z =>
+        km >= z.desde && km <= z.hasta
+    );
+}
 function render(){
-    if(!TRAMOS[tramoActual]) return;
-    tituloTramo.textContent = TRAMOS[tramoActual].nombre;
+    const t=TRAMOS[tramoActual];
+    tituloTramo.textContent=t.nombre;
     lista.innerHTML="";
-    let arr=[...TRAMOS[tramoActual].data];
+    let arr=[...t.data];
     if(sentido.value==="down") arr.reverse();
+
     arr.forEach(e=>{
-        const d=document.createElement("div");
-        d.className="km "+(e.clase||"");
-        const crucesKm=zonasCruceActivas(e.km);
-        if(crucesKm.length) d.classList.add("prohibicion");
+        const d = document.createElement("div");
+d.className = "km "+(e.clase||"");
+
+if(kmEnProhibicion(e.km)){
+    d.classList.add("prohibicion");
+}
+
         d.innerHTML=`<b>KM ${e.km}</b>`;
         if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
         if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
-        const alertasKm=alertasUsuario.filter(a=>e.km>=a.desde && e.km<=a.hasta);
-        if(alertasKm.length){
-            const aviso=document.createElement("div");
-            aviso.className="obs";
-            aviso.innerHTML=alertasKm.map(a=>`⚠️ ${a.texto}`).join("<br>");
-            if(esAdmin){
-                alertasKm.forEach(alerta=>{
-                    const btnBorrar=document.createElement("button");
-                    btnBorrar.textContent="🗑";
-                    btnBorrar.style.marginLeft="5px";
-                    btnBorrar.onclick=async()=>{await deleteDoc(doc(db,"alertas_usuario",tramoActual,alerta.id))};
-                    aviso.appendChild(btnBorrar);
-                });
-            }
-            d.appendChild(aviso);
-        }
         d.onclick=()=>seleccionar(e,d);
         lista.appendChild(d);
+        const crucesKm = zonasCruceActivas(e.km);
+
+if(crucesKm.length){
+    d.style.background = "#fdecea";
+    d.style.borderLeftColor = "#c62828";
+}
+
     });
 }
 
+/* Seleccionar KM */
+
+
 function seleccionar(e,div){
-    if(!e) return;
-    document.querySelectorAll(".km").forEach(x=>{x.classList.remove("selected"); x.querySelector(".menu")?.remove();});
-    actual=e; kmActual.value=e.km; kmManual=false; if(!horaInicio.value) horaInicio.value=horaSistema();
-    const crucesKm=zonasCruceActivas(e.km);
-    if(crucesKm.length){
-        const aviso=document.createElement("div");
-        aviso.className="obs";
-        aviso.innerHTML=crucesKm.map(z=>`⛔ ${z.texto} (${z.desde}–${z.hasta})`).join("<br>");
-        div.appendChild(aviso);
-    }
+    document.querySelectorAll(".km").forEach(x=>{
+        x.classList.remove("selected");
+        x.querySelector(".menu")?.remove();
+    });
+    actual=e;
+    div.classList.add("selected");
+    kmManual = false;
+    kmActual.value=e.km;
+    if(!horaInicio.value) horaInicio.value=horaSistema();
+
+    const crucesKm = zonasCruceActivas(e.km);
+
+if(crucesKm.length){
+    const aviso = document.createElement("div");
+    aviso.className = "obs";
+    aviso.innerHTML = crucesKm
+        .map(z => `⛔ ${z.texto} (${z.desde}–${z.hasta})`)
+        .join("<br>");
+    div.appendChild(aviso);
+}
+
+
     const m=document.createElement("div");
     m.className="menu";
-    m.innerHTML=`<button onclick="verCarta()">🗺 Carta</button><button onclick="verObs()">📝 Obs</button>`;
+    m.innerHTML=`
+        <button onclick="verCarta()">🗺 Carta</button>
+        <button onclick="verObs()">📝 Obs</button>
+    `;
     div.appendChild(m);
-    div.classList.add("selected");
     recalcular();
 }
 
+/* Recalcular ETA */
+
+function zonasCruceActivas(km){
+    const t = TRAMOS[tramoActual];
+    if(!t.zonasFijas) return [];
+
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce" &&
+        km >= z.desde &&
+        km <= z.hasta &&
+        (z.sentido === "ambos" || z.sentido === sentido.value)
+    );
+}
+
+
+
 function recalcular(){
     if(!horaInicio.value) return;
-    const km=+kmActual.value, vel=+velocidad.value;
+
+    const km = +kmActual.value;
+    const vel = +velocidad.value;
     if(!vel) return;
-    const destinoManualInput=document.getElementById("kmDestinoManual");
-    const destinoManual=destinoManualInput.value?+destinoManualInput.value:null;
-    const [h,m]=horaInicio.value.split(":").map(Number), inicio=h*60+m;
-    const t=TRAMOS[tramoActual];
-    let out="<b>ETA:</b><br>";
-    zonasCruceActivas(km).forEach(z=>{
-        out+=`<div style="background:#c62828;color:white;padding:6px;border-radius:4px;margin-bottom:6px;font-weight:bold;">
-        ⛔ PROHIBIDO CRUCE<br>${z.texto}<br>KM ${z.desde} → KM ${z.hasta}</div>`;
+
+    const destinoManualInput = document.getElementById("kmDestinoManual");
+    const destinoManual = destinoManualInput.value ? +destinoManualInput.value : null;
+
+    const [h,m] = horaInicio.value.split(":").map(Number);
+    const inicio = h*60 + m;
+    const t = TRAMOS[tramoActual];
+    let out = "<b>ETA:</b><br>";
+
+    const cruces = zonasCruceActivas(km);
+
+cruces.forEach(z => {
+    out += `
+    <div style="
+        background:#c62828;
+        color:white;
+        padding:6px;
+        border-radius:4px;
+        margin-bottom:6px;
+        font-weight:bold;
+    ">
+        ⛔ PROHIBIDO CRUCE<br>
+        ${z.texto}<br>
+        KM ${z.desde} → KM ${z.hasta}
+    </div>
+    `;
+});
+
+    window.recalcular = recalcular;
+
+    // Destinos predefinidos
+    t.destinos.forEach(d => {
+        const minutosViaje = Math.abs(d - km) / vel * 60;
+const tt = inicio + minutosViaje;
+
+const hh = Math.floor(tt / 60) % 24;
+const mm = Math.floor(tt % 60);
+
+out += `KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}
+        <span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span><br>`;
+
     });
-    t.destinos.forEach(d=>{
-        const minutosViaje=Math.abs(d-km)/vel*60;
-        const tt=inicio+minutosViaje;
-        const hh=Math.floor(tt/60)%24, mm=Math.floor(tt%60);
-        out+=`KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}<span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span><br>`;
-    });
-    if(destinoManual!==null&&!isNaN(destinoManual)){
-        const minutosViaje=Math.abs(destinoManual-km)/vel*60;
-        const tt=inicio+minutosViaje;
-        const hh=Math.floor(tt/60)%24, mm=Math.floor(tt%60);
-        out+=`<hr><b>KM ${destinoManual}:</b> ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}<span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span>`;
+
+    // Destino manual
+    if(destinoManual !== null && !isNaN(destinoManual)){
+        const minutosViaje = Math.abs(destinoManual - km) / vel * 60;
+const tt = inicio + minutosViaje;
+
+const hh = Math.floor(tt / 60) % 24;
+const mm = Math.floor(tt % 60);
+
+out += `<hr><b>KM ${destinoManual}:</b> ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}
+        <span style="color:#555"> (+ ${formatearDuracion(minutosViaje)})</span>`;
+
     }
-    resultado.innerHTML=out;
+
+    resultado.innerHTML = out;
 }
-window.recalcular=recalcular;
 
-function formatearDuracion(minutos){ const h=Math.floor(minutos/60), m=Math.round(minutos%60); return `${h} h ${m} min`; }
-
-window.cerrar=function(id){document.getElementById(id).style.display="none";}
-
-/* ================= ADMIN ================= */
-const CLAVE_ADMIN="parana123";
-window.activarAdmin=function(){
-    if(esAdmin){
-        if(confirm("¿Salir del modo administrador?")){ esAdmin=false; localStorage.removeItem("admin"); }
-    } else {
-        const pass=prompt("Clave administrador:");
-        if(pass===CLAVE_ADMIN){ esAdmin=true; localStorage.setItem("admin","true"); }
-        else alert("Clave incorrecta");
-    }
-    actualizarIconoAdmin();
+function formatearDuracion(minutos){
+    const h = Math.floor(minutos / 60);
+    const m = Math.round(minutos % 60);
+    return `${h} h ${m} min`;
 }
+
 
 /* ================= OBSERVACIONES ================= */
-let unsubscribeObs=null;
+
+let unsubscribeObs = null;
+
 function escucharObservaciones(){
-    if(!actual) return;
     if(unsubscribeObs) unsubscribeObs();
-    const ref=collection(db,"observaciones",tramoActual,String(actual.km));
-    const q=query(ref,orderBy("fecha","desc"));
-    unsubscribeObs=onSnapshot(q,snap=>{
-        const historial=document.getElementById("historial");
-        historial.innerHTML="";
-        snap.forEach(docu=>{
-            const o=docu.data();
-            const div=document.createElement("div");
-            div.className="historico";
-            div.innerHTML=`<div class="fecha">${o.fecha.toDate().toLocaleString()}</div><div>${o.texto}</div>${esAdmin?`<button onclick="editarObs('${docu.id}')">✏️</button><button onclick="borrarObs('${docu.id}')">🗑</button>`:""}`;
+
+    const ref = collection(
+        db,
+        "observaciones",
+        tramoActual,
+        String(actual.km)
+    );
+
+    const q = query(ref, orderBy("fecha", "desc"));
+
+    unsubscribeObs = onSnapshot(q, snap => {
+        const historial = document.getElementById("historial");
+historial.innerHTML = "";
+
+        snap.forEach(docu => {
+            const o = docu.data();
+            const div = document.createElement("div");
+            div.className = "historico";
+
+            div.innerHTML = `
+                <div class="fecha">${o.fecha.toDate().toLocaleString()}</div>
+                <div>${o.texto}</div>
+                ${esAdmin ? `
+                    <button onclick="editarObs('${docu.id}')">✏️</button>
+                    <button onclick="borrarObs('${docu.id}')">🗑</button>
+                ` : ""}
+            `;
+
             historial.appendChild(div);
         });
     });
 }
 
-window.verObs=function(){
-    if(!actual) { alert("Selecciona un KM primero"); return; }
-    document.getElementById("kmObs").textContent=actual.km;
-    document.getElementById("modalObs").style.display="flex";
+window.verObs = function(){
+    document.getElementById("kmObs").textContent = actual.km;
+    document.getElementById("modalObs").style.display = "flex";
     escucharObservaciones();
 }
 
-window.guardarObs=async function(){
-    if(!actual) return;
-    const textarea=document.getElementById("textoObs");
-    const texto=textarea.value.trim();
-    if(texto.length<5){ alert("La observación debe tener al menos 5 caracteres."); return; }
-    const ref=collection(db,"observaciones",tramoActual,String(actual.km));
-    await addDoc(ref,{texto,fecha:new Date(),admin:esAdmin});
-    textarea.value="";
+
+
+
+
+window.guardarObs = async function(){
+    const textarea = document.getElementById("textoObs");
+    const texto = textarea.value.trim();
+
+    if(texto.length < 5){
+        alert("La observación debe tener al menos 5 caracteres.");
+        return;
+    }
+
+    const ref = collection(
+        db,
+        "observaciones",
+        tramoActual,
+        String(actual.km)
+    );
+
+    await addDoc(ref, {
+        texto: texto,
+        fecha: new Date(),
+        admin: esAdmin
+    });
+
+    textarea.value = "";
 }
 
-window.editarObs=async function(id){
-    if(!esAdmin||!actual) return;
-    const nuevo=prompt("Editar observación:");
-    if(!nuevo||nuevo.trim().length<5) return;
-    const ref=doc(db,"observaciones",tramoActual,String(actual.km),id);
-    await updateDoc(ref,{texto:nuevo.trim()});
+
+window.editarObs = async function(id){
+    if(!esAdmin) return;
+
+    const nuevo = prompt("Editar observación:");
+    if(!nuevo || nuevo.trim().length < 5) return;
+
+    const ref = doc(
+        db,
+        "observaciones",
+        tramoActual,
+        String(actual.km),
+        id
+    );
+
+    await updateDoc(ref, { texto: nuevo.trim() });
 }
 
-window.borrarObs=async function(id){
+
+window.borrarObs = async function(id){
     if(!confirm("¿Borrar observación?")) return;
-    if(!actual) return;
-    const ref=doc(db,"observaciones",tramoActual,String(actual.km),id);
+
+    const ref = doc(
+        db,
+        "observaciones",
+        tramoActual,
+        String(actual.km),
+        id
+    );
+
     await deleteDoc(ref);
 }
 
 /* ================= CARTAS ================= */
-window.verCarta=function(){
-    if(!actual) return;
-    let kmStr=Number.isInteger(actual.km)?String(actual.km):String(actual.km).replace(".", "_");
-    imgCarta.src=`https://Diieguitto.github.io/navegacion-fluvial/CARTAS/${kmStr}.jpg`;
-    imgCarta.onerror=()=>{ imgCarta.src="https://Diieguitto.github.io/navegacion-fluvial/CARTAS/placeholder.jpg"; };
-    modalCarta.style.display="flex";
+
+
+window.verCarta = function(){
+    let kmStr;
+    if(Number.isInteger(actual.km)){
+        kmStr = String(actual.km);
+    } else {
+        kmStr = String(actual.km).replace('.', '_');
+    }
+
+    imgCarta.src = `https://Diieguitto.github.io/navegacion-fluvial/CARTAS/${kmStr}.jpg`;
+
+    imgCarta.onerror = () => {
+        imgCarta.src = "https://Diieguitto.github.io/navegacion-fluvial/CARTAS/placeholder.jpg";
+    };
+
+    modalCarta.style.display = "flex";
+}
+
+
+
+/* ================= UTIL ================= */
+window.cerrar = function(id){
+    document.getElementById(id).style.display = "none";
 }
 
 /* ================= INIT ================= */
 actualizarIconoAdmin();
 inicializarTramos();
-horaInicio.value=horaSistema();
+horaInicio.value = horaSistema();
 cambiarTramo();
 </script>
+
 </body>
 </html>
