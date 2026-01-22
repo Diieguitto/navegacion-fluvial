@@ -33,6 +33,7 @@ select,input,button{padding:6px;font-size:14px;}
 textarea{width:100%;min-height:70px;}
 .historico{font-size:13px;margin-bottom:8px;border-bottom:1px solid #ddd;padding-bottom:4px;}
 .fecha{color:#555;font-size:12px;}
+.prohibicion { background: rgba(198, 40, 40, 0.12);}
 @media(max-width:600px){select,input,button{width:100%;margin:5px 0;font-size:16px;}}
 </style>
 </head>
@@ -303,6 +304,17 @@ function mostrarAlertaTramo(){
         cont.innerHTML = "";
         return;
     }
+    
+    function kmEnProhibicion(km){
+    const zonas = prohibicionesTramo();
+
+    return zonas.some(z =>
+        km >= z.desde && km <= z.hasta
+    );
+}
+
+
+
 
     // ordenar según sentido de navegación
     zonas = [...zonas].sort((a,b) => {
@@ -367,8 +379,13 @@ function render(){
     if(sentido.value==="down") arr.reverse();
 
     arr.forEach(e=>{
-        const d=document.createElement("div");
-        d.className="km "+(e.clase||"");
+        const d = document.createElement("div");
+d.className = "km "+(e.clase||"");
+
+if(kmEnProhibicion(e.km)){
+    d.classList.add("prohibicion");
+}
+
         d.innerHTML=`<b>KM ${e.km}</b>`;
         if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
         if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
