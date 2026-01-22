@@ -41,6 +41,8 @@ textarea{width:100%;min-height:70px;}
 <header>
     <button id="adminBtn" onclick="activarAdmin()">🔒</button>
     <h2 id="tituloTramo"></h2>
+    <div id="alertaTramo"></div>
+
 
     Tramo:
     <select id="selectorTramo" onchange="cambiarTramo()"></select>
@@ -283,6 +285,41 @@ function cambiarTramo(){
 }
 window.cambiarTramo = cambiarTramo;
 
+function prohibicionesTramo(){
+    const t = TRAMOS[tramoActual];
+    if(!t.zonasFijas) return [];
+
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce" &&
+        (z.sentido === "ambos" || z.sentido === sentido.value)
+    );
+}
+
+function mostrarAlertaTramo(){
+    const cont = document.getElementById("alertaTramo");
+    const zonas = prohibicionesTramo();
+
+    if(!zonas.length){
+        cont.innerHTML = "";
+        return;
+    }
+
+    cont.innerHTML = `
+    <div style="
+        background:#b71c1c;
+        color:white;
+        padding:10px;
+        border-radius:6px;
+        margin-top:8px;
+        font-weight:bold;
+    ">
+        ⛔ ATENCIÓN – PROHIBICIONES DE CRUCE EN ESTE TRAMO<br>
+        ${zonas.map(z => `• KM ${z.desde} a ${z.hasta}: ${z.texto}`).join("<br>")}
+    </div>
+    `;
+}
+
+
 
 
 /* Cambiar sentido */
@@ -299,6 +336,7 @@ function cambiarSentido(){
 
     render();
     recalcular();
+    mostrarAlertaTramo();
 }
 
 window.cambiarSentido = cambiarSentido;
