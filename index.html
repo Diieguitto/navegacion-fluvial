@@ -60,6 +60,9 @@ KM actual:
 Velocidad (km/h):
 <input id="velocidad" type="number" value="12" step="0.1" oninput="recalcular()">
 
+KM destino (opcional):
+<input id="kmDestinoManual" type="number" step="0.1" oninput="recalcular()">
+
 Hora inicio:
 <input id="horaInicio" type="time" oninput="recalcular()">
 
@@ -307,24 +310,42 @@ function seleccionar(e,div){
 }
 
 /* Recalcular ETA */
+
+
 function recalcular(){
     if(!horaInicio.value) return;
-    const km=+kmActual.value;
-    const vel=+velocidad.value;
+
+    const km = +kmActual.value;
+    const vel = +velocidad.value;
     if(!vel) return;
 
-    const [h,m]=horaInicio.value.split(":").map(Number);
-    const inicio=h*60+m;
-    const t=TRAMOS[tramoActual];
+    const destinoManualInput = document.getElementById("kmDestinoManual");
+    const destinoManual = destinoManualInput.value ? +destinoManualInput.value : null;
 
-    let out="<b>ETA:</b><br>";
-    t.destinos.forEach(d=>{
-        const tt=inicio+Math.abs(d-km)/vel*60;
-        const hh=Math.floor(tt/60)%24;
-        const mm=Math.floor(tt%60);
-        out+=`KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}<br>`;
+    const [h,m] = horaInicio.value.split(":").map(Number);
+    const inicio = h*60 + m;
+    const t = TRAMOS[tramoActual];
+
+    let out = "<b>ETA:</b><br>";
+
+    // Destinos predefinidos
+    t.destinos.forEach(d => {
+        const tt = inicio + Math.abs(d - km) / vel * 60;
+        const hh = Math.floor(tt / 60) % 24;
+        const mm = Math.floor(tt % 60);
+        out += `KM ${d}: ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}<br>`;
     });
-    resultado.innerHTML=out;
+
+    // Destino manual
+    if(destinoManual !== null && !isNaN(destinoManual)){
+        const tt = inicio + Math.abs(destinoManual - km) / vel * 60;
+        const hh = Math.floor(tt / 60) % 24;
+        const mm = Math.floor(tt % 60);
+
+        out += `<hr><b>KM ${destinoManual}:</b> ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+    }
+
+    resultado.innerHTML = out;
 }
 
 /* ================= OBSERVACIONES ================= */
