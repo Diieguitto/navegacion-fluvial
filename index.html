@@ -160,14 +160,14 @@ const TRAMOS = {
             desde: 492,
             hasta: 498,
             texto: "Canal angosto – prohibido cruce",
-            sentido: "ambos"
+            
         },
         {
             tipo: "prohibicion_cruce",
             desde: 505,
             hasta: 507,
-            texto: "Curva cerrada – prohibido cruce",
-            sentido: "up"
+            texto: "Vuelta cerrada – prohibido cruce",
+            
         }
     ],
         data: [
@@ -290,10 +290,10 @@ function prohibicionesTramo(){
     if(!t.zonasFijas) return [];
 
     return t.zonasFijas.filter(z =>
-        z.tipo === "prohibicion_cruce" &&
-        (z.sentido === "ambos" || z.sentido === sentido.value)
+        z.tipo === "prohibicion_cruce"
     );
 }
+
 
 function mostrarAlertaTramo(){
     const cont = document.getElementById("alertaTramo");
