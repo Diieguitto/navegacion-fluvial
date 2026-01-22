@@ -120,7 +120,7 @@ const db = getFirestore(app);
 const CLAVE_ADMIN="parana123";
 let esAdmin = localStorage.getItem("admin")==="true";
 
-function activarAdmin(){
+window.activarAdmin = function(){
     if(esAdmin){
         if(confirm("¿Salir del modo administrador?")){
             esAdmin=false;
@@ -135,6 +135,7 @@ function activarAdmin(){
     }
     actualizarIconoAdmin();
 }
+
 
 function actualizarIconoAdmin(){
     adminBtn.textContent = esAdmin ? "🔓" : "🔒";
@@ -327,10 +328,10 @@ function recalcular(){
 }
 
 /* ================= OBSERVACIONES ================= */
-function verObs(){
+window.verObs = function(){
     kmObs.textContent = actual.km;
     escucharObservaciones();
-    modalObs.style.display="flex";
+    modalObs.style.display = "flex";
 }
 
 
@@ -395,19 +396,16 @@ async function borrarObs(id){
 /* ================= CARTAS ================= */
 
 
-function verCarta(){
+window.verCarta = function(){
     let kmStr;
-    // Si el KM tiene decimal, reemplaza . por _
     if(Number.isInteger(actual.km)){
-        kmStr = String(actual.km); // 480.jpg
+        kmStr = String(actual.km);
     } else {
-        kmStr = String(actual.km).replace('.', '_'); // 481_4.jpg
+        kmStr = String(actual.km).replace('.', '_');
     }
 
-    // URL de GitHub Pages
     imgCarta.src = `https://Diieguitto.github.io/navegacion-fluvial/CARTAS/${kmStr}.jpg`;
 
-    // Si no existe la carta, muestra placeholder
     imgCarta.onerror = () => {
         imgCarta.src = "https://Diieguitto.github.io/navegacion-fluvial/CARTAS/placeholder.jpg";
     };
@@ -416,8 +414,11 @@ function verCarta(){
 }
 
 
+
 /* ================= UTIL ================= */
-function cerrar(id){document.getElementById(id).style.display="none";}
+window.cerrar = function(id){
+    document.getElementById(id).style.display = "none";
+}
 
 /* ================= INIT ================= */
 actualizarIconoAdmin();
