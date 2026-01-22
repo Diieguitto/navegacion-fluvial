@@ -33,7 +33,8 @@ select,input,button{padding:6px;font-size:14px;}
 textarea{width:100%;min-height:70px;}
 .historico{font-size:13px;margin-bottom:8px;border-bottom:1px solid #ddd;padding-bottom:4px;}
 .fecha{color:#555;font-size:12px;}
-.prohibicion { background: rgba(198, 40, 40, 0.12);}
+.prohibicion {
+ background: rgba(198, 40, 40, 0.12);}
 @media(max-width:600px){select,input,button{width:100%;margin:5px 0;font-size:16px;}}
 </style>
 </head>
@@ -43,10 +44,6 @@ textarea{width:100%;min-height:70px;}
     <button id="adminBtn" onclick="activarAdmin()">🔒</button>
     <h2 id="tituloTramo"></h2>
     <div id="alertaTramo"></div>
-    <button onclick="nuevaAlerta()" style="margin-left:10px;background:#c62828;color:white;padding:6px;border:none;border-radius:4px;cursor:pointer;">
-        ⚠️ Reportar alerta
-      </button>
-      
 
 
     Tramo:
@@ -89,7 +86,6 @@ Hora inicio:
 </div>
 </div>
 
-
 <!-- MODAL OBS -->
 <div class="modal" id="modalObs">
 <div class="modal-content">
@@ -100,22 +96,6 @@ Hora inicio:
 <button onclick="guardarObs()">Guardar</button>
 </div>
 </div>
-
-<!-- MODAL ALERTA -->
-<div class="modal" id="modalAlerta">
-    <div class="modal-content">
-      <span class="close" onclick="cerrar('modalAlerta')">×</span>
-      <h3>📢 Reportar prohibición o alerta</h3>
-      <label>Desde KM:</label>
-      <input type="number" id="alertaDesde" step="0.1"><br>
-      <label>Hasta KM (opcional):</label>
-      <input type="number" id="alertaHasta" step="0.1"><br>
-      <label>Descripción:</label>
-      <textarea id="alertaTexto"></textarea><br>
-      <button onclick="guardarAlerta()">Guardar alerta</button>
-    </div>
-  </div>
-  
 
 <script type="module">
     /* ================= FIREBASE ================= */
@@ -144,58 +124,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ================= ALERTAS DE USUARIO ================= */
-
-// Mostrar modal de alerta
-window.nuevaAlerta = function(){
-    if(!esAdmin){
-        alert("Solo administrador puede agregar alertas.");
-        return;
-    }
-    document.getElementById("alertaDesde").value = "";
-    document.getElementById("alertaHasta").value = "";
-    document.getElementById("alertaTexto").value = "";
-    document.getElementById("modalAlerta").style.display = "flex";
-}
-
-// Guardar alerta en Firebase
-window.guardarAlerta = async function(){
-    const desde = parseFloat(document.getElementById("alertaDesde").value);
-    let hasta = parseFloat(document.getElementById("alertaHasta").value);
-    const texto = document.getElementById("alertaTexto").value.trim();
-
-    if(isNaN(desde) || texto.length < 5){
-        alert("KM inicial y descripción son obligatorios.");
-        return;
-    }
-    if(isNaN(hasta) || hasta < desde) hasta = desde; // si no se pone, aplica solo al KM
-
-    const ref = collection(db, "alertas_usuario", tramoActual);
-
-    await addDoc(ref, {
-        desde, hasta, texto,
-        fecha: new Date(),
-        admin: esAdmin
-    });
-
-    cerrar("modalAlerta");
-    render(); // refresca la lista de KMs
-}
-
-// alertas reportadas por usuarios en el tramo actual
-let alertasUsuario = []; 
-// Cada alerta: { desde: number, hasta: number, texto: string, fecha: Date }
-
-async function cargarAlertasUsuario(){
-    const ref = collection(db, "alertas_usuario", tramoActual);
-    const q = query(ref, orderBy("fecha", "desc"));
-    onSnapshot(q, snap => {
-        alertasUsuario = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        render(); // refresca la lista
-    });
-}
- // alertas reportadas por usuarios en el tramo actual
-
 /* ================= ADMIN ================= */
 const CLAVE_ADMIN="parana123";
 let esAdmin = localStorage.getItem("admin")==="true";
@@ -220,54 +148,6 @@ window.activarAdmin = function(){
 function actualizarIconoAdmin(){
     adminBtn.textContent = esAdmin ? "🔓" : "🔒";
 }
-function reportarAlerta() {
-    if(esAdmin){
-        alert("El administrador no puede reportar alertas de usuario.");
-        return;
-    }
-
-    let desde = parseFloat(prompt("KM inicio de la alerta:"));
-    let hasta = parseFloat(prompt("KM fin de la alerta (igual si es 1 KM):"));
-    let texto = prompt("Texto de la alerta:");
-
-    if(isNaN(desde) || isNaN(hasta) || !texto){
-        alert("Datos incorrectos");
-        return;
-    }
-
-    if(hasta < desde) [desde, hasta] = [hasta, desde]; // intercambio si está al revés
-
-    alertasUsuario.push({
-        desde,
-        hasta,
-        texto,
-        fecha: new Date()
-    });
-
-    render();
-    mostrarAlertaTramo();
-}
-
-
-function escucharAlertasUsuario(){
-    const ref = collection(db, "alertas_navegacion");
-    const q = query(
-        ref,
-        orderBy("fecha", "desc")
-    );
-
-    // listener en tiempo real
-    onSnapshot(q, snapshot => {
-        // filtramos por tramo actual y activas
-        alertasUsuario = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(a => a.tramo === tramoActual && a.activo);
-
-        // luego podemos volver a mostrar la alerta en el banner
-        mostrarAlertaTramo();
-    });
-}
-
 
 /* ================= TRAMOS ================= */
 const TRAMOS = {
@@ -411,37 +291,37 @@ function prohibicionesTramo(){
     const t = TRAMOS[tramoActual];
     if(!t.zonasFijas) return [];
 
-    // Fijas
-    let fijas = t.zonasFijas.filter(z => z.tipo === "prohibicion_cruce");
-
-    // Usuario
-    let usuario = alertasUsuario.filter(z => z.tipo === "prohibicion_cruce");
-
-    return [...fijas, ...usuario];
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce"
+    );
 }
-
 
 
 function mostrarAlertaTramo(){
     const cont = document.getElementById("alertaTramo");
-    let zonas = [...prohibicionesTramo()];
-
-    // 🔹 Agregar alertas de usuario
-    zonas.push(...alertasUsuario.map(a => ({
-        desde: a.desde,
-        hasta: a.hasta,
-        texto: a.texto,
-        tipo: "alerta_usuario"
-    })));
+    let zonas = prohibicionesTramo();
 
     if(!zonas.length){
         cont.innerHTML = "";
         return;
     }
+    
+    function kmEnProhibicion(km){
+    const zonas = prohibicionesTramo();
 
-    // ordenar según sentido
-    zonas = zonas.sort((a,b) => {
-        return sentido.value === "up" ? a.desde - b.desde : b.desde - a.desde;
+    return zonas.some(z =>
+        km >= z.desde && km <= z.hasta
+    );
+}
+
+
+
+
+    // ordenar según sentido de navegación
+    zonas = [...zonas].sort((a,b) => {
+        return sentido.value === "up"
+            ? a.desde - b.desde
+            : b.desde - a.desde;
     });
 
     cont.innerHTML = `
@@ -455,17 +335,17 @@ function mostrarAlertaTramo(){
         font-size:12.5px;
         line-height:1.4;
     ">
-        ⛔ <b>Prohibiciones y alertas en el tramo</b><br>
-        ${zonas.map(z => {
-            const d1 = sentido.value === "up" ? z.desde : z.hasta;
-            const d2 = sentido.value === "up" ? z.hasta : z.desde;
-            return `• KM ${d1} a ${d2} – ${z.texto}`;
-        }).join("<br>")}
+        ⛔ <b>Prohibiciones de cruce en el tramo</b><br>
+        ${
+            zonas.map(z => {
+                const d1 = sentido.value === "up" ? z.desde : z.hasta;
+                const d2 = sentido.value === "up" ? z.hasta : z.desde;
+                return `• KM ${d1} a ${d2} – ${z.texto}`;
+            }).join("<br>")
+        }
     </div>
     `;
 }
-
-
 
 
 
@@ -486,76 +366,22 @@ function cambiarSentido(){
     render();
     recalcular();
     mostrarAlertaTramo();
-    escucharAlertasUsuario();
-
 }
 
 window.cambiarSentido = cambiarSentido;
 
 
 /* Render lista boyas/peligros */
-
-function kmEnProhibicion(km){
-    return zonasCruceActivas(km).length > 0;
-}
-
-
 function render(){
-    const t = TRAMOS[tramoActual];
-    tituloTramo.textContent = t.nombre;
-    lista.innerHTML = "";
+    const t=TRAMOS[tramoActual];
+    tituloTramo.textContent=t.nombre;
+    lista.innerHTML="";
+    let arr=[...t.data];
+    if(sentido.value==="down") arr.reverse();
 
-    let arr = [...t.data];
-    if(sentido.value === "down") arr.reverse();
-
-    arr.forEach(e => {
-        const d = document.createElement("div");
-        d.className = "km " + (e.clase || "");
-
-        // 🚧 Prohibiciones fijas
-        const crucesKm = zonasCruceActivas(e.km);
-        if(crucesKm.length){
-            d.classList.add("prohibicion");
-        }
-
-        d.innerHTML = `<b>KM ${e.km}</b>`;
-        if(e.txt) d.innerHTML += `<div class="obs">${e.txt}</div>`;
-        if(e.obs) d.innerHTML += `<div class="obs">${e.obs}</div>`;
-
-        // ⚠️ Alertas de usuario
-        const alertasKm = alertasUsuario.filter(a => e.km >= a.desde && e.km <= a.hasta);
-        if(alertasKm.length){
-            d.style.background = "#fdecea"; // rojo claro
-            d.style.borderLeftColor = "#c62828";
-
-            const aviso = document.createElement("div");
-            aviso.className = "obs";
-            aviso.innerHTML = alertasKm.map(a => `⚠️ ${a.texto}`).join("<br>");
-            
-            // borrar alerta solo admin
-            if(esAdmin){
-                alertasKm.forEach(alerta => {
-                    const btnBorrar = document.createElement("button");
-                    btnBorrar.textContent = "🗑";
-                    btnBorrar.style.marginLeft = "5px";
-                    btnBorrar.onclick = () => {
-                        alertasUsuario = alertasUsuario.filter(a => a !== alerta);
-                        render();
-                        mostrarAlertaTramo();
-                    };
-                    aviso.appendChild(btnBorrar);
-                });
-            }
-
-            d.appendChild(aviso);
-        }
-
-        d.onclick = () => seleccionar(e,d);
-        lista.appendChild(d);
-    });
-}
-
-
+    arr.forEach(e=>{
+        const d=document.createElement("div");
+        d.className="km "+(e.clase||"");
         d.innerHTML=`<b>KM ${e.km}</b>`;
         if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
         if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
@@ -568,10 +394,8 @@ if(crucesKm.length){
     d.style.borderLeftColor = "#c62828";
 }
 
-    
-
-
-
+    });
+}
 
 /* Seleccionar KM */
 
@@ -613,11 +437,16 @@ if(crucesKm.length){
 
 function zonasCruceActivas(km){
     const t = TRAMOS[tramoActual];
-    let fijas = t.zonasFijas ? t.zonasFijas.filter(z => z.tipo==="prohibicion_cruce") : [];
-    let usuario = alertasUsuario.filter(a => km >= a.desde && km <= a.hasta);
+    if(!t.zonasFijas) return [];
 
-    return [...fijas, ...usuario];
+    return t.zonasFijas.filter(z =>
+        z.tipo === "prohibicion_cruce" &&
+        km >= z.desde &&
+        km <= z.hasta &&
+        (z.sentido === "ambos" || z.sentido === sentido.value)
+    );
 }
+
 
 
 function recalcular(){
@@ -633,8 +462,6 @@ function recalcular(){
     const [h,m] = horaInicio.value.split(":").map(Number);
     const inicio = h*60 + m;
     const t = TRAMOS[tramoActual];
-    let out = "<b>ETA:</b><br>";
-
     const cruces = zonasCruceActivas(km);
 
 cruces.forEach(z => {
@@ -654,6 +481,7 @@ cruces.forEach(z => {
     `;
 });
 
+    let out = "<b>ETA:</b><br>";
     window.recalcular = recalcular;
 
     // Destinos predefinidos
@@ -693,8 +521,6 @@ function formatearDuracion(minutos){
 
 
 /* ================= OBSERVACIONES ================= */
-
-
 
 let unsubscribeObs = null;
 
