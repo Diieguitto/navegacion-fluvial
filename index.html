@@ -123,6 +123,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* ================= ALERTAS DE USUARIO ================= */
+
+let alertasUsuario = []; // alertas reportadas por usuarios en el tramo actual
+
 /* ================= ADMIN ================= */
 const CLAVE_ADMIN="parana123";
 let esAdmin = localStorage.getItem("admin")==="true";
@@ -147,6 +151,26 @@ window.activarAdmin = function(){
 function actualizarIconoAdmin(){
     adminBtn.textContent = esAdmin ? "🔓" : "🔒";
 }
+
+function escucharAlertasUsuario(){
+    const ref = collection(db, "alertas_navegacion");
+    const q = query(
+        ref,
+        orderBy("fecha", "desc")
+    );
+
+    // listener en tiempo real
+    onSnapshot(q, snapshot => {
+        // filtramos por tramo actual y activas
+        alertasUsuario = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(a => a.tramo === tramoActual && a.activo);
+
+        // luego podemos volver a mostrar la alerta en el banner
+        mostrarAlertaTramo();
+    });
+}
+
 
 /* ================= TRAMOS ================= */
 const TRAMOS = {
@@ -290,10 +314,15 @@ function prohibicionesTramo(){
     const t = TRAMOS[tramoActual];
     if(!t.zonasFijas) return [];
 
-    return t.zonasFijas.filter(z =>
-        z.tipo === "prohibicion_cruce"
-    );
+    // Fijas
+    let fijas = t.zonasFijas.filter(z => z.tipo === "prohibicion_cruce");
+
+    // Usuario
+    let usuario = alertasUsuario.filter(z => z.tipo === "prohibicion_cruce");
+
+    return [...fijas, ...usuario];
 }
+
 
 
 function mostrarAlertaTramo(){
@@ -305,7 +334,7 @@ function mostrarAlertaTramo(){
         return;
     }
 
-    // ordenar según sentido de navegación
+    // ordenar según sentido
     zonas = [...zonas].sort((a,b) => {
         return sentido.value === "up"
             ? a.desde - b.desde
@@ -320,20 +349,20 @@ function mostrarAlertaTramo(){
         border-left:6px solid #c62828;
         border-radius:5px;
         margin-top:8px;
-        font-size:12px;
+        font-size:12.5px;
         line-height:1.4;
     ">
         ⛔ <b>Prohibiciones de cruce en el tramo</b><br>
-        ${
-            zonas.map(z => {
-                const d1 = sentido.value === "up" ? z.desde : z.hasta;
-                const d2 = sentido.value === "up" ? z.hasta : z.desde;
-                return `• KM ${d1} a ${d2} – ${z.texto}`;
-            }).join("<br>")
-        }
+        ${zonas.map(z => {
+            const d1 = sentido.value === "up" ? z.desde : z.hasta;
+            const d2 = sentido.value === "up" ? z.hasta : z.desde;
+            const fecha = z.fecha ? ` – reportado: ${new Date(z.fecha.seconds*1000).toLocaleDateString()}` : "";
+            return `• KM ${d1} a ${d2} – ${z.texto}${z.origen === "usuario" ? fecha : ""}`;
+        }).join("<br>")}
     </div>
     `;
 }
+
 
 
 
@@ -355,6 +384,8 @@ function cambiarSentido(){
     render();
     recalcular();
     mostrarAlertaTramo();
+    escucharAlertasUsuario();
+
 }
 
 window.cambiarSentido = cambiarSentido;
@@ -397,6 +428,8 @@ if(crucesKm.length){
 
     });
 }
+
+
 
 /* Seleccionar KM */
 
@@ -523,6 +556,8 @@ function formatearDuracion(minutos){
 
 
 /* ================= OBSERVACIONES ================= */
+
+
 
 let unsubscribeObs = null;
 
