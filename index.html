@@ -305,12 +305,6 @@ function mostrarAlertaTramo(){
         return;
     }
     
-    function kmEnProhibicion(km){
-    const zonas = prohibicionesTramo();
-
-    return zonas.some(z =>
-        km >= z.desde && km <= z.hasta
-    );
 }
 
 
@@ -371,6 +365,13 @@ window.cambiarSentido = cambiarSentido;
 
 
 /* Render lista boyas/peligros */
+
+function kmEnProhibicion(km){
+    const zonas = prohibicionesTramo();
+    return zonas.some(z =>
+        km >= z.desde && km <= z.hasta
+    );
+}
 function render(){
     const t=TRAMOS[tramoActual];
     tituloTramo.textContent=t.nombre;
@@ -466,6 +467,8 @@ function recalcular(){
     const [h,m] = horaInicio.value.split(":").map(Number);
     const inicio = h*60 + m;
     const t = TRAMOS[tramoActual];
+    let out = "<b>ETA:</b><br>";
+
     const cruces = zonasCruceActivas(km);
 
 cruces.forEach(z => {
@@ -485,7 +488,6 @@ cruces.forEach(z => {
     `;
 });
 
-    let out = "<b>ETA:</b><br>";
     window.recalcular = recalcular;
 
     // Destinos predefinidos
