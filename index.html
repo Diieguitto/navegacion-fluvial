@@ -20,25 +20,55 @@ select,input,button{padding:6px;font-size:14px;}
 .selected{outline:2px solid #ff9800;}
 .roja{border-left-color:#c62828;}
 .verde{border-left-color:#2e7d32;}
-.negra{border-left-color:#000;}
+.negra {
+    border-left: 6px solid;
+    border-image: linear-gradient(
+        to bottom,
+        black 33%,
+        red 33%,
+        red 66%,
+        black 66%
+    ) 1;
+}
 .azul{border-left-color:#1565c0;}
 .violeta{border-left-color:#6a1b9a;}
 .puente {
-    border-left:6px solid #455a64;
-    background: repeating-linear-gradient(
-        45deg,
-        #eceff1,
-        #eceff1 6px,
-        #cfd8dc 6px,
-        #cfd8dc 12px
-    );
+    border-left: 6px solid #5d4037; /* marrón oscuro */
+    background: #d7ccc8; /* marrón claro */
 }
 .preferencial-derecha {border-left:6px solid #c62828; background: linear-gradient(to bottom, #c62828 50%, #2e7d32 50%);}
 .preferencial-izquierda {border-left:6px solid #2e7d32; background: linear-gradient(to bottom, #2e7d32 50%, #c62828 50%);}
-.cardinal-n { background:linear-gradient(to bottom, black 50%, yellow 50%); }
-.cardinal-s { background:linear-gradient(to bottom, yellow 50%, black 50%); }
-.cardinal-e { background:linear-gradient(to bottom, black 33%, yellow 33%, yellow 66%, black 66%); }
-.cardinal-o { background:linear-gradient(to bottom, yellow 33%, black 33%, black 66%, yellow 66%); }
+.cardinal-n {
+    border-left: 6px solid;
+    border-image: linear-gradient(to bottom, black 50%, yellow 50%) 1;
+}
+
+.cardinal-s {
+    border-left: 6px solid;
+    border-image: linear-gradient(to bottom, yellow 50%, black 50%) 1;
+}
+
+.cardinal-e {
+    border-left: 6px solid;
+    border-image: linear-gradient(
+        to bottom,
+        black 33%,
+        yellow 33%,
+        yellow 66%,
+        black 66%
+    ) 1;
+}
+
+.cardinal-o {
+    border-left: 6px solid;
+    border-image: linear-gradient(
+        to bottom,
+        yellow 33%,
+        black 33%,
+        black 66%,
+        yellow 66%
+    ) 1;
+}
 .obs{font-size:13px;color:#333;margin-top:4px;}
 .menu{margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;}
 .menu button{margin-right:6px;font-size:13px;}
@@ -171,14 +201,22 @@ const TRAMOS = {
     nombre: "Río Paraná – Tramo KM 1240 a 1135 (L6Y CH12)",
     inicio: 1135,
     fin: 1240,
-    destinos: [1200, 1135],
+    destinos: [1240, 1205, 1197, 1135],
     data: [
-        {km:1240,tipo:"sistema",clase:"violeta",txt:"Inicio L6Y"},
-        {km:1200,clase:"azul",txt:"Referencia"},
-        {km:1208,tipo:"boya",clase:"verde"},
-        {km:1210,tipo:"puente",clase:"puente",txt:"Puente de prueba"},
-        {km:1213,tipo:"boya",clase:"verde"},
-        {km:1135,tipo:"sistema",clase:"violeta",txt:"Fin L6Y / Inicio L6V"}
+    {km:1135,tipo:"sistema",clase:"violeta",txt:"Fin L6Y / Inicio L6V"},
+{km:1196,clase:"azul",txt:"BARRANQUERA L6Z CH09"},
+{km:1205,tipo:"puente",clase:"puente",txt:"Puente de prueba"},
+{km:1208,clase:"azul",txt:"CORRIENTES"},
+{km:1213,tipo:"boya",clase:"verde"},
+{km:1216 ,clase: "negra", txt: "Peligro aislado" },
+{km:1216.5, clase: "roja" },
+{km:1218, clase: "roja" },
+{km:1223.2, clase: "roja" },
+{km:1232.7, clase: "roja" },
+{km:1236, clase: "roja" },
+{km:1238, clase: "roja" },
+{km:1239,tipo:"cardinal-o",clase:"cardinal-o",txt:"Cardinal Oeste"},
+{km:1240,tipo:"sistema",clase:"violeta",txt:"Inicio L6Y"}
     ]
 },
 
@@ -441,7 +479,7 @@ LA_PLATA: {
 
 
 /* ================= donde inicia ================= */
-let tramoActual="L6M";
+let tramoActual="L6Y";
 let actual=null;
 let kmManual = false;
 
@@ -586,9 +624,6 @@ if(crucesKm.length){
     d.style.background = "#fdecea";
     d.style.borderLeftColor = "#c62828";
 }
-
-    });
-}
 if(e.tipo === "boya_preferencial"){
     if(e.preferencia === "canal_principal_derecha"){
         d.classList.add("preferencial-derecha");
@@ -602,6 +637,9 @@ if(e.tipo === "boya_preferencial"){
 if(e.tipo === "puente"){
     d.innerHTML += `<div class="obs">🌉 Puente</div>`;
 }
+    });
+}
+
 /* Seleccionar KM */
 
 
