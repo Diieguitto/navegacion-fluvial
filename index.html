@@ -23,6 +23,22 @@ select,input,button{padding:6px;font-size:14px;}
 .negra{border-left-color:#000;}
 .azul{border-left-color:#1565c0;}
 .violeta{border-left-color:#6a1b9a;}
+.puente {
+    border-left:6px solid #455a64;
+    background: repeating-linear-gradient(
+        45deg,
+        #eceff1,
+        #eceff1 6px,
+        #cfd8dc 6px,
+        #cfd8dc 12px
+    );
+}
+.preferencial-derecha {border-left:6px solid #c62828; background: linear-gradient(to bottom, #c62828 50%, #2e7d32 50%);}
+.preferencial-izquierda {border-left:6px solid #2e7d32; background: linear-gradient(to bottom, #2e7d32 50%, #c62828 50%);}
+.cardinal-n { background:linear-gradient(to bottom, black 50%, yellow 50%); }
+.cardinal-s { background:linear-gradient(to bottom, yellow 50%, black 50%); }
+.cardinal-e { background:linear-gradient(to bottom, black 33%, yellow 33%, yellow 66%, black 66%); }
+.cardinal-o { background:linear-gradient(to bottom, yellow 33%, black 33%, black 66%, yellow 66%); }
 .obs{font-size:13px;color:#333;margin-top:4px;}
 .menu{margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;}
 .menu button{margin-right:6px;font-size:13px;}
@@ -159,6 +175,9 @@ const TRAMOS = {
     data: [
         {km:1240,tipo:"sistema",clase:"violeta",txt:"Inicio L6Y"},
         {km:1200,clase:"azul",txt:"Referencia"},
+        {km:1208,tipo:"boya",clase:"verde"},
+        {km:1210,tipo:"puente",clase:"puente",txt:"Puente de prueba"},
+        {km:1213,tipo:"boya",clase:"verde"},
         {km:1135,tipo:"sistema",clase:"violeta",txt:"Fin L6Y / Inicio L6V"}
     ]
 },
@@ -570,7 +589,19 @@ if(crucesKm.length){
 
     });
 }
-
+if(e.tipo === "boya_preferencial"){
+    if(e.preferencia === "canal_principal_derecha"){
+        d.classList.add("preferencial-derecha");
+        d.innerHTML += `<div class="obs">↘ Canal principal a estribor</div>`;
+    }
+    if(e.preferencia === "canal_principal_izquierda"){
+        d.classList.add("preferencial-izquierda");
+        d.innerHTML += `<div class="obs">↙ Canal principal a babor</div>`;
+    }
+}
+if(e.tipo === "puente"){
+    d.innerHTML += `<div class="obs">🌉 Puente</div>`;
+}
 /* Seleccionar KM */
 
 
