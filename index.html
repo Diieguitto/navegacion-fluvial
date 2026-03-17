@@ -69,6 +69,21 @@ select,input,button{padding:6px;font-size:14px;}
         yellow 66%
     ) 1;
 }
+
+.amarradero {
+    border-left: 6px solid #ef6c00;
+    background: #ffe0b2;
+}
+
+.zona-espera {
+    border-left: 6px solid #f9a825;
+    background: #fff8e1;
+}
+
+.zona-fondeo {
+    border-left: 6px solid #6d4c41;
+    background: #efebe9;
+}   
 .obs{font-size:13px;color:#333;margin-top:4px;}
 .menu{margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;}
 .menu button{margin-right:6px;font-size:13px;}
@@ -204,17 +219,46 @@ const TRAMOS = {
     destinos: [1240, 1205, 1197, 1135],
     data: [
     {km:1135,tipo:"sistema",clase:"violeta",txt:"Fin L6Y / Inicio L6V"},
+    {km:1136.5, tipo:"boya",clase:"roja"},
+    {km:1140,clase:"azul",txt:"EMPEDRADO"},
+    {km:1141, tipo:"boya",clase:"roja"},
+    {km:1142.7,tipo:"boya",clase:"verde", txt:"BALIZA MD"},
+    {km:1144.2,tipo:"boya",clase:"verde"},
+    {km:1145.3, tipo:"boya",clase:"roja"},
+    {km:1147, tipo:"boya",clase:"roja"},
+    {km:1149.7, tipo:"boya",clase:"roja"},
+    {km:1152.8, tipo:"boya",clase:"roja"},
+    {km:1155.7, tipo:"boya",clase:"verde"},
+    {km:1155 ,clase: "negra", txt: "Peligro aislado" },
+    {km:1159.6, tipo:"boya",clase:"verde"},
+    {km:1160 ,clase: "negra", txt: "Peligro aislado" },
+    {km:1161.5, tipo:"boya",clase:"verde"},
+    {km:1164, tipo:"boya",clase:"roja"},
+    {km:1165.3, tipo:"boya",clase:"verde"},
+    {km:1167.6, tipo:"boya",clase:"roja"},
+    {km:1172.1, tipo:"boya",clase:"verde"},
+    {km:1174.1, tipo:"boya",clase:"verde"},
+    {km:1177.7, tipo:"boya",clase:"roja"},
+    {km:1180.6,tipo:"boya",clase:"verde", txt:"BALIZA MD"},
+    {km:1183, tipo:"boya",clase:"roja"},
+    {km:1185, tipo:"boya",clase:"roja"},
+    {km:1187.8,tipo:"boya",clase:"verde", txt:"BALIZA MD"},
+    {km:1190.6,tipo:"boya",clase:"verde", txt:"BALIZA MD"},
+    {km:1194, tipo:"boya",clase:"roja"},
+    {km:1194.1,tipo:"boya",clase:"verde", txt:"BALIZA MD"},
+    
+
 {km:1196,clase:"azul",txt:"BARRANQUERA L6Z CH09"},
 {km:1205,tipo:"puente",clase:"puente",txt:"Puente de prueba"},
 {km:1208,clase:"azul",txt:"CORRIENTES"},
 {km:1213,tipo:"boya",clase:"verde"},
 {km:1216 ,clase: "negra", txt: "Peligro aislado" },
-{km:1216.5, clase: "roja" },
-{km:1218, clase: "roja" },
-{km:1223.2, clase: "roja" },
-{km:1232.7, clase: "roja" },
-{km:1236, clase: "roja" },
-{km:1238, clase: "roja" },
+{km:1216.5, tipo:"boya",clase:"roja"},
+{km:1218, tipo:"boya",clase:"roja"},
+{km:1223.2, tipo:"boya",clase:"roja"},
+{km:1232.7, tipo:"boya",clase:"roja"},
+{km:1236, tipo:"boya",clase:"roja"},
+{km:1238, tipo:"boya",clase:"roja"},
 {km:1239,tipo:"cardinal-o",clase:"cardinal-o",txt:"Cardinal Oeste"},
 {km:1240,tipo:"sistema",clase:"violeta",txt:"Inicio L6Y"}
     ]
@@ -268,6 +312,8 @@ L6N: {
         inicio: 480,
         fin: 568,
         destinos: [533,568],
+       
+       
         zonasFijas: [
         {
             tipo: "prohibicion_cruce",
@@ -283,7 +329,18 @@ L6N: {
             texto: "Vuelta cerrada – prohibido cruce",
             
         }
-    ],
+        ],
+
+        zonasFondeo: [
+    {
+        desde: 520,
+        hasta: 530,
+        texto: "Zona de fondeo habilitada"
+    }
+],
+
+        
+    
         data: [
         {km:480,tipo:"sistema",clase:"violeta",txt:"Isla El Zambo MD – Fin L6I / Inicio L6M"},
 {km:481.4,tipo:"boya",clase:"roja"},
@@ -296,7 +353,7 @@ L6N: {
 {km:494,tipo:"boya",clase:"roja",obs:"0,80 a mala vía – 23 ft"},
 {km:495.8,tipo:"boya",clase:"roja"},
 {km:497.5,tipo:"boya",clase:"roja"},
-{km:498,tipo:"zona",txt:"Zona de espera"},
+{km:498,tipo:"zona_espera", clase:"zona-espera",txt:"Zona de espera"},
 {km:499.7,tipo:"boya",clase:"verde"},
 {km:500,tipo:"obs",txt:"Vuelta del 500"},
 {km:500.5,tipo:"boya",clase:"roja"},
@@ -336,7 +393,7 @@ L6N: {
 {km:553,tipo:"boya",clase:"roja",txt:"Gral. Alvear"},
 {km:554.8,tipo:"boya",clase:"roja"},
 {km:558,tipo:"boya",clase:"verde"},
-{km:561,tipo:"zona",txt:"Última zona de espera"},
+{km:561,tipo:"zona_espera", clase:"zona-espera",txt:"Zona de espera"},
 {km:561.3,tipo:"boya",clase:"roja"},
 {km:563,tipo:"obs",txt:"Corre mucho"},
 {km:563.6,tipo:"boya",clase:"verde"},
@@ -535,6 +592,8 @@ function mostrarAlertaTramo(){
         return;
     }
 
+   
+
     // ordenar según sentido de navegación
     zonas = [...zonas].sort((a,b) => {
         return sentido.value === "up"
@@ -598,6 +657,14 @@ function kmEnProhibicion(km){
         km >= z.desde && km <= z.hasta
     );
 }
+function zonasFondeoActivas(km){
+    const t = TRAMOS[tramoActual];
+    if(!t.zonasFondeo) return [];
+
+    return t.zonasFondeo.filter(z =>
+        km >= z.desde && km <= z.hasta
+    );
+}
 function render(){
     const t=TRAMOS[tramoActual];
     tituloTramo.textContent=t.nombre;
@@ -606,38 +673,35 @@ function render(){
     if(sentido.value==="down") arr.reverse();
 
     arr.forEach(e=>{
-        const d = document.createElement("div");
-d.className = "km "+(e.clase||"");
+    const d = document.createElement("div");
+    d.className = "km "+(e.clase||"");
 
-if(kmEnProhibicion(e.km)){
-    d.classList.add("prohibicion");
-}
-
-        d.innerHTML=`<b>KM ${e.km}</b>`;
-        if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
-        if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
-        d.onclick=()=>seleccionar(e,d);
-        lista.appendChild(d);
-        const crucesKm = zonasCruceActivas(e.km);
-
-if(crucesKm.length){
-    d.style.background = "#fdecea";
-    d.style.borderLeftColor = "#c62828";
-}
-if(e.tipo === "boya_preferencial"){
-    if(e.preferencia === "canal_principal_derecha"){
-        d.classList.add("preferencial-derecha");
-        d.innerHTML += `<div class="obs">↘ Canal principal a estribor</div>`;
+    if(kmEnProhibicion(e.km)){
+        d.classList.add("prohibicion");
     }
-    if(e.preferencia === "canal_principal_izquierda"){
-        d.classList.add("preferencial-izquierda");
-        d.innerHTML += `<div class="obs">↙ Canal principal a babor</div>`;
+
+    const fondeoKm = zonasFondeoActivas(e.km);
+
+    if(fondeoKm.length){
+        d.classList.add("zona-fondeo");
     }
-}
-if(e.tipo === "puente"){
-    d.innerHTML += `<div class="obs">🌉 Puente</div>`;
-}
-    });
+
+    d.innerHTML=`<b>KM ${e.km}</b>`;
+
+    if(e.tipo === "amarradero"){
+        d.innerHTML += `<div class="obs"><b>${e.txt || "Amarradero"}</b></div>`;
+    }
+
+    if(e.tipo === "zona_espera"){
+        d.innerHTML += `<div class="obs"><b>${e.txt || "Zona de espera"}</b></div>`;
+    }
+
+    if(e.txt) d.innerHTML+=`<div class="obs">${e.txt}</div>`;
+    if(e.obs) d.innerHTML+=`<div class="obs">${e.obs}</div>`;
+
+    d.onclick=()=>seleccionar(e,d);
+    lista.appendChild(d);
+});
 }
 
 /* Seleccionar KM */
@@ -655,6 +719,16 @@ function seleccionar(e,div){
     if(!horaInicio.value) horaInicio.value=horaSistema();
 
     const crucesKm = zonasCruceActivas(e.km);
+    const fondeoKm = zonasFondeoActivas(e.km);
+
+if(fondeoKm.length){
+    const aviso = document.createElement("div");
+    aviso.className = "obs";
+    aviso.innerHTML = fondeoKm
+        .map(z => `⚓ ${z.texto} (${z.desde}–${z.hasta})`)
+        .join("<br>");
+    div.appendChild(aviso);
+}
 
 if(crucesKm.length){
     const aviso = document.createElement("div");
