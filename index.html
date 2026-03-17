@@ -150,6 +150,62 @@ function actualizarIconoAdmin(){
 
 /* ================= TRAMOS ================= */
 const TRAMOS = {
+
+    L6Y: {
+    nombre: "Río Paraná – Tramo KM 1240 a 1135 (L6Y CH12)",
+    inicio: 1135,
+    fin: 1240,
+    destinos: [1200, 1135],
+    data: [
+        {km:1240,tipo:"sistema",clase:"violeta",txt:"Inicio L6Y"},
+        {km:1200,clase:"azul",txt:"Referencia"},
+        {km:1135,tipo:"sistema",clase:"violeta",txt:"Fin L6Y / Inicio L6V"}
+    ]
+},
+
+L6V: {
+    nombre: "Río Paraná – Tramo KM 1135 a 827 (L6V CH12)",
+    inicio: 827,
+    fin: 1135,
+    destinos: [1000, 827],
+    data: [
+        {km:1135,tipo:"sistema",clase:"violeta",txt:"Inicio L6V"},
+        {km:1000,clase:"azul"},
+        {km:827,tipo:"sistema",clase:"violeta",txt:"Fin L6V / Inicio L6S"}
+    ]
+},
+
+L6S: {
+    nombre: "Río Paraná – Tramo KM 827 a 667 (L6S CH12)",
+    inicio: 667,
+    fin: 827,
+    destinos: [750, 667],
+    data: [
+        {km:827,tipo:"sistema",clase:"violeta",txt:"Inicio L6S"},
+        {km:750,clase:"azul"},
+        {km:667,tipo:"sistema",clase:"violeta",txt:"Fin L6S / Inicio L6N"}
+    ]
+},
+
+L6N: {
+        nombre: "Río Paraná – Tramo KM 568 a 677 (L6N)",
+        inicio: 568,
+        fin: 677,
+        destinos: [600,677],
+        data: [
+            { km: 568, clase: "violeta", txt: "Inicio L6N" },
+            { km: 572, clase: "roja", obs: "Curva peligrosa" },
+            { km: 580, clase: "verde" },
+            { km: 590, clase: "negra", txt: "Peligro aislado" },
+            { km: 610, clase: "verde" },
+            { km: 630, clase: "roja" },
+            { km: 650, clase: "verde" },
+            { km: 677, clase: "violeta", txt: "Fin L6N" }
+        ]
+    },
+
+
+
     L6M: {
         nombre: "Río Paraná – Tramo KM 480 a 568 (L6M)",
         inicio: 480,
@@ -233,27 +289,144 @@ const TRAMOS = {
             
         ]
     },
-    L6N: {
-        nombre: "Río Paraná – Tramo KM 568 a 677 (L6N)",
-        inicio: 568,
-        fin: 677,
-        destinos: [600,677],
-        data: [
-            { km: 568, clase: "violeta", txt: "Inicio L6N" },
-            { km: 572, clase: "roja", obs: "Curva peligrosa" },
-            { km: 580, clase: "verde" },
-            { km: 590, clase: "negra", txt: "Peligro aislado" },
-            { km: 610, clase: "verde" },
-            { km: 630, clase: "roja" },
-            { km: 650, clase: "verde" },
-            { km: 677, clase: "violeta", txt: "Fin L6N" }
-        ]
-    }
+   
+
+
+L6I: {
+    nombre: "Río Paraná – Tramo KM 480 a 376 (L6I CH14)",
+    inicio: 376,
+    fin: 480,
+    destinos: [420, 376],
+    data: [
+        {km:480,tipo:"sistema",clase:"violeta",txt:"Inicio L6I"},
+        {km:420,clase:"azul"},
+        {km:376,tipo:"sistema",clase:"violeta",txt:"Fin L6I / Inicio L6G"}
+    ]
+},
+
+L6G: {
+    nombre: "Río Paraná – Tramo KM 376 a 310 (L6G CH12)",
+    inicio: 310,
+    fin: 376,
+    destinos: [340, 310],
+    data: [
+        {km:376,tipo:"sistema",clase:"violeta",txt:"Inicio L6G"},
+        {km:340,clase:"azul"},
+        {km:310,tipo:"sistema",clase:"violeta",txt:"Fin L6G / Inicio L6E"}
+    ]
+},
+
+L6E: {
+    nombre: "Río Paraná – Tramo KM 310 a 240 (L6E CH12)",
+    inicio: 240,
+    fin: 310,
+    destinos: [270, 240],
+    data: [
+        {km:310,tipo:"sistema",clase:"violeta",txt:"Inicio L6E"},
+        {km:270,clase:"azul"},
+        {km:240,tipo:"sistema",clase:"violeta",txt:"Fin L6E / Delta"}
+    ]
+},
+
+PARANA_GUAZU: {
+    nombre: "Paraná Guazú – Tramo principal",
+    inicio: 0,
+    fin: 200,
+    destinos: [100,200],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta",txt:"Inicio Guazú"},
+        {km:100,clase:"azul"},
+        {km:200,tipo:"sistema",clase:"violeta",txt:"Fin Guazú"}
+    ]
+},
+
+TALAVERA: {
+    nombre: "Pasaje Talavera",
+    inicio: 0,
+    fin: 80,
+    destinos: [40,80],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta",txt:"Inicio Talavera"},
+        {km:80,tipo:"sistema",clase:"violeta",txt:"Fin Talavera"}
+    ]
+},
+
+BRAVO: {
+    nombre: "Paraná Bravo",
+    inicio: 0,
+    fin: 150,
+    destinos: [75,150],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta",txt:"Inicio Bravo"},
+        {km:150,tipo:"sistema",clase:"violeta",txt:"Fin Bravo"}
+    ]
+},
+
+PALMAS: {
+    nombre: "Paraná de las Palmas",
+    inicio: 0,
+    fin: 200,
+    destinos: [100,200],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta"},
+        {km:200,tipo:"sistema",clase:"violeta"}
+    ]
+},
+
+MITRE: {
+    nombre: "Canal Emilio Mitre",
+    inicio: 0,
+    fin: 60,
+    destinos: [30,60],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta"},
+        {km:60,tipo:"sistema",clase:"violeta"}
+    ]
+},
+
+BROWN: {
+    nombre: "Canal Brown (Acceso Buenos Aires)",
+    inicio: 0,
+    fin: 40,
+    destinos: [20,40],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta"},
+        {km:40,tipo:"sistema",clase:"violeta"}
+    ]
+},
+
+MARTIN_GARCIA: {
+    nombre: "Canal Martín García",
+    inicio: 0,
+    fin: 100,
+    destinos: [50,100],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta"},
+        {km:100,tipo:"sistema",clase:"violeta"}
+    ]
+},
+
+LA_PLATA: {
+    nombre: "Río de la Plata – Zona común / Acceso Puerto La Plata",
+    inicio: 0,
+    fin: 100,
+    destinos: [50,100],
+    data: [
+        {km:0,tipo:"sistema",clase:"violeta"},
+        {km:100,tipo:"sistema",clase:"violeta"}
+    ]
+}
+
+
 };
 
+
+/* ================= donde inicia ================= */
 let tramoActual="L6M";
 let actual=null;
 let kmManual = false;
+
+
 
 
 /* ================= FUNCIONES ================= */
